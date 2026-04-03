@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aircon King — HP Load Calculator</title>
+<link rel="icon" type="image/png" href="ak-logo.png">
+<style>
+  :root {
+    --blue-dark:  #0B5394;
+    --blue-mid:   #1F6FBF;
+    --blue-light: #6BB8E8;
+    --blue-pale:  #EBF4FB;
+    --blue-card:  #F0F7FF;
+    --white:      #FFFFFF;
+    --grey:       #64748B;
+    --border:     #C8DFF0;
+    --green:      #16A34A;
+    --shadow:     0 4px 24px rgba(11,83,148,.12);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: linear-gradient(160deg, #dbeeff 0%, #f0f7ff 60%, #fff 100%);
+    min-height: 100vh;
+    color: #1e293b;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: linear-gradient(135deg, #0B5394 0%, #1a7bd4 60%, #6BB8E8 100%);
+    padding: 28px 24px 22px;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(11,83,148,.35);
+    position: relative;
+    overflow: hidden;
+  }
+  header::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+  .logo-wrap {
+    display: inline-block; background: white; border-radius: 14px;
+    padding: 10px 28px; box-shadow: 0 4px 16px rgba(0,0,0,.18);
+    position: relative;
+  }
+  header img { height: 58px; display: block; }
+  header h1 {
+    color: white; font-size: 1.05rem; font-weight: 400;
+    letter-spacing: .18em; text-transform: uppercase;
+    margin-top: 12px; opacity: .88; position: relative;
+  }
+
+  /* ── WRAPPER ── */
+  .wrap { max-width: 760px; margin: 0 auto; padding: 28px 16px 60px; }
+
+  /* ── CARDS ── */
+  .card {
+    background: white; border-radius: 16px;
+    box-shadow: var(--shadow); margin-bottom: 20px; overflow: hidden;
+  }
+  .card-head {
+    background: linear-gradient(90deg, var(--blue-dark), var(--blue-mid));
+    color: white; padding: 13px 20px;
+    font-weight: 700; font-size: .95rem; letter-spacing: .04em;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .card-head svg { opacity: .85; flex-shrink: 0; }
+  .card-body { padding: 20px; }
+
+  /* ── FORM FIELDS ── */
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  label { font-size: .8rem; font-weight: 600; color: var(--blue-dark); letter-spacing: .03em; }
+  input[type=text], input[type=number], input[type=date], select {
+    border: 1.5px solid var(--border); border-radius: 8px;
+    padding: 9px 12px; font-size: .95rem; color: #1e293b;
+    background: var(--blue-pale); transition: border .2s, box-shadow .2s;
+    width: 100%;
+  }
+  input:focus, select:focus {
+    outline: none; border-color: var(--blue-mid);
+    box-shadow: 0 0 0 3px rgba(31,111,191,.15);
+  }
+  input[type=number] { font-weight: 600; }
+
+  /* ── TOGGLE ── */
+  .toggle-group { display: flex; gap: 0; border-radius: 8px; overflow: hidden; border: 1.5px solid var(--border); }
+  .toggle-group button {
+    flex: 1; padding: 9px; border: none; background: var(--blue-pale);
+    color: var(--grey); font-size: .9rem; font-weight: 600; cursor: pointer;
+    transition: background .18s, color .18s;
+  }
+  .toggle-group button.active {
+    background: var(--blue-dark); color: white;
+  }
+
+  /* ── HEAT LOAD TABLE ── */
+  .hl-table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+  .hl-table thead tr { background: linear-gradient(90deg, var(--blue-dark), var(--blue-mid)); color: white; }
+  .hl-table th { padding: 9px 10px; text-align: left; font-weight: 600; letter-spacing: .03em; }
+  .hl-table th:nth-child(2), .hl-table th:nth-child(3), .hl-table th:nth-child(4) { text-align: center; }
+  .hl-table td { padding: 7px 10px; border-bottom: 1px solid #e8f0f8; vertical-align: middle; }
+  .hl-table tr:nth-child(even) td { background: var(--blue-card); }
+  .hl-table td:nth-child(2) { text-align: center; color: var(--blue-mid); font-weight: 600; }
+  .hl-table td:nth-child(4) { text-align: center; font-weight: 700; color: var(--blue-dark); }
+  .qty-input {
+    width: 64px; border: 1.5px solid var(--border); border-radius: 6px;
+    padding: 5px 8px; font-size: .9rem; font-weight: 700;
+    text-align: center; background: var(--blue-pale);
+    color: #1e293b; display: block; margin: 0 auto;
+  }
+  .qty-input:focus { outline: none; border-color: var(--blue-mid); box-shadow: 0 0 0 3px rgba(31,111,191,.15); }
+
+  /* ── DIVIDER ── */
+  .divider { height: 1px; background: var(--border); margin: 18px 0; }
+
+  /* ── TOTALS ── */
+  .total-row {
+    display: flex; justify-content: space-between; align-items: center;
+    background: linear-gradient(90deg, var(--blue-dark), var(--blue-mid));
+    color: white; border-radius: 10px; padding: 12px 18px;
+    margin-top: 14px; font-weight: 700;
+  }
+  .total-row .val { font-size: 1.15rem; }
+
+  /* ── ENV FACTORS ── */
+  .env-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 0; border-bottom: 1px solid #e8f0f8; gap: 12px;
+  }
+  .env-row:last-child { border-bottom: none; }
+  .env-label { flex: 1; font-size: .9rem; line-height: 1.4; }
+  .env-label strong { display: block; color: var(--blue-dark); }
+  .env-label span { font-size: .8rem; color: var(--grey); }
+  .env-val { font-weight: 700; color: var(--blue-mid); min-width: 80px; text-align: right; font-size: .9rem; }
+
+  /* ── RESULT ── */
+  .result-card {
+    background: linear-gradient(135deg, #0B5394 0%, #1a7bd4 60%, #6BB8E8 100%);
+    border-radius: 20px; padding: 36px 24px; text-align: center;
+    box-shadow: 0 8px 32px rgba(11,83,148,.35); margin-bottom: 20px;
+    position: relative; overflow: hidden;
+  }
+  .result-card::before {
+    content: ''; position: absolute; top: -40px; right: -40px;
+    width: 200px; height: 200px; border-radius: 50%;
+    background: rgba(255,255,255,.06);
+  }
+  .result-label { color: rgba(255,255,255,.8); font-size: .85rem; letter-spacing: .15em; text-transform: uppercase; margin-bottom: 6px; }
+  .result-hp { color: white; font-size: 5.5rem; font-weight: 900; line-height: 1; letter-spacing: -.02em; position: relative; }
+  .result-unit { color: rgba(255,255,255,.7); font-size: 1.6rem; font-weight: 400; margin-left: 4px; }
+  .result-sub { color: rgba(255,255,255,.75); font-size: .88rem; margin-top: 12px; }
+  .result-btu { margin-top: 18px; display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+  .btu-chip {
+    background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25);
+    border-radius: 20px; padding: 6px 16px; color: white; font-size: .82rem; font-weight: 600;
+  }
+
+  /* ── BUTTONS ── */
+  .btn-row { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 6px; }
+  .btn {
+    padding: 11px 28px; border-radius: 10px; font-size: .92rem; font-weight: 700;
+    cursor: pointer; border: none; transition: transform .15s, box-shadow .15s;
+  }
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.15); }
+  .btn-primary { background: var(--blue-dark); color: white; }
+  .btn-outline { background: white; color: var(--blue-dark); border: 2px solid var(--blue-dark); }
+
+  /* ── HELP BUTTON ── */
+  .help-btn {
+    position: fixed; bottom: 20px; right: 20px; z-index: 900;
+    width: 48px; height: 48px; border-radius: 50%; border: none;
+    background: var(--blue-dark); color: white; font-size: 1.4rem; font-weight: 700;
+    cursor: pointer; box-shadow: 0 4px 16px rgba(11,83,148,.4);
+    transition: transform .15s, box-shadow .15s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .help-btn:hover { transform: scale(1.08); box-shadow: 0 6px 24px rgba(11,83,148,.5); }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; z-index: 1000;
+    background: rgba(0,0,0,.45); backdrop-filter: blur(3px);
+    align-items: center; justify-content: center; padding: 20px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: white; border-radius: 18px; max-width: 520px; width: 100%;
+    max-height: 85vh; overflow-y: auto; box-shadow: 0 16px 48px rgba(0,0,0,.25);
+    animation: modalIn .25s ease-out;
+  }
+  @keyframes modalIn { from { opacity: 0; transform: translateY(20px) scale(.96); } to { opacity: 1; transform: none; } }
+  .modal-head {
+    background: linear-gradient(90deg, var(--blue-dark), var(--blue-mid));
+    color: white; padding: 16px 20px; border-radius: 18px 18px 0 0;
+    display: flex; align-items: center; justify-content: space-between;
+    font-weight: 700; font-size: 1rem;
+  }
+  .modal-close {
+    background: rgba(255,255,255,.2); border: none; color: white;
+    width: 32px; height: 32px; border-radius: 50%; font-size: 1.1rem;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: background .15s;
+  }
+  .modal-close:hover { background: rgba(255,255,255,.35); }
+  .modal-body { padding: 20px; }
+  .modal-body h3 { color: var(--blue-dark); font-size: .9rem; margin: 16px 0 6px; letter-spacing: .03em; }
+  .modal-body h3:first-child { margin-top: 0; }
+  .modal-body p, .modal-body li { font-size: .88rem; color: #334155; line-height: 1.55; }
+  .modal-body ol { padding-left: 20px; }
+  .modal-body li { margin-bottom: 6px; }
+  .modal-body .tip {
+    background: var(--blue-pale); border-left: 3px solid var(--blue-mid);
+    padding: 10px 14px; border-radius: 0 8px 8px 0; margin-top: 14px;
+    font-size: .84rem; color: var(--blue-dark);
+  }
+
+  /* ── CALC DISPLAY ── */
+  .calc-display {
+    background: var(--blue-pale); border: 1.5px solid var(--border);
+    border-radius: 8px; padding: 8px 12px; font-weight: 700;
+    font-size: 1rem; color: var(--blue-dark); text-align: right;
+  }
+  .step-calc {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    margin: 10px 0; padding: 10px 14px; background: var(--blue-card);
+    border-radius: 10px; border: 1px solid var(--border); font-size: .88rem;
+  }
+  .step-calc .step-val { font-weight: 700; color: var(--blue-dark); background: white; border-radius: 6px; padding: 3px 10px; border: 1px solid var(--border); }
+  .step-calc .step-op { color: var(--grey); }
+  .step-calc .step-result { font-weight: 800; color: var(--blue-dark); font-size: 1rem; margin-left: auto; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 520px) {
+    .row2, .row3 { grid-template-columns: 1fr; }
+    .result-hp { font-size: 4rem; }
+    .logo-wrap { padding: 7px 18px; } header img { height: 44px; }
+  }
+
+  @media print {
+    header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .btn-row { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-wrap"><img src="ak-logo.png" alt="Aircon King"></div>
+  <h1>HP Load Calculator</h1>
+</header>
+
+<div class="wrap">
+
+  <!-- CLIENT INFO -->
+  <div class="card">
+    <div class="card-head">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Client Information
+    </div>
+    <div class="card-body">
+      <div class="row2" style="margin-bottom:14px">
+        <div class="field"><label>Client Name</label><input type="text" id="clientName" placeholder="e.g. Juan dela Cruz"></div>
+        <div class="field"><label>Contact Number</label><input type="text" id="contactNum" placeholder="09XX XXX XXXX"></div>
+      </div>
+      <div class="row2" style="margin-bottom:14px">
+        <div class="field"><label>Address</label><input type="text" id="address" placeholder="City / Barangay"></div>
+        <div class="field"><label>Date of Survey</label><input type="date" id="surveyDate"></div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>Property Type</label>
+          <div class="toggle-group" id="typeGroup">
+            <button class="active" onclick="setToggle('typeGroup',this,'Residential')">Residential</button>
+            <button onclick="setToggle('typeGroup',this,'Commercial')">Commercial</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>Particular Area</label>
+          <select id="area">
+            <option>Bedroom</option>
+            <option>Office</option>
+            <option>Dining</option>
+            <option>Living Room</option>
+            <option>Studio Type</option>
+            <option>Others</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROOM MEASUREMENT -->
+  <div class="card">
+    <div class="card-head">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+      Room Measurement / Base Cooling
+    </div>
+    <div class="card-body">
+      <div class="row3" style="align-items:end; margin-bottom:14px">
+        <div class="field"><label>Length (meters)</label><input type="number" id="length" value="0" min="0" step="0.1" oninput="calc()"></div>
+        <div class="field"><label>Width (meters)</label><input type="number" id="width" value="0" min="0" step="0.1" oninput="calc()"></div>
+        <div class="field"><label>Floor Area</label><div class="calc-display" id="floorArea">0.00 sqm</div></div>
+      </div>
+
+      <div class="step-calc">
+        <span id="sc_fa" class="step-val">0 sqm</span>
+        <span class="step-op">&times;</span>
+        <span class="step-val">600 BTU/sqm</span>
+        <span class="step-op">=</span>
+        <span id="sc_basebtu" class="step-result">0 BTU</span>
+      </div>
+
+      <div class="row2" style="margin-bottom:4px">
+        <div class="field">
+          <label>Direct Sunlight</label>
+          <div class="toggle-group" id="sunGroup">
+            <button onclick="setToggle('sunGroup',this,'Yes');calc()">Yes <span style="font-size:.75rem;opacity:.7">(+15%)</span></button>
+            <button class="active" onclick="setToggle('sunGroup',this,'No');calc()">No</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>High Ceiling Excess <span style="font-weight:400;color:var(--grey)">(meters above 2.9m)</span></label>
+          <input type="number" id="ceilExcess" value="0" min="0" step="0.5" oninput="calc()">
+        </div>
+      </div>
+      <p style="font-size:.78rem;color:var(--grey);margin-bottom:14px;margin-top:4px">High ceiling adds 7% per meter excess</p>
+
+      <div class="total-row">
+        <span>Total Cooling Based BTU</span>
+        <span class="val" id="totalCoolBtu">0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- INTERNAL HEAT LOAD -->
+  <div class="card">
+    <div class="card-head">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 6v6l4 2"/></svg>
+      Internal Heat Load
+    </div>
+    <div class="card-body" style="padding:0">
+      <table class="hl-table">
+        <thead><tr><th>Item</th><th>BTU/unit</th><th>Qty</th><th>Total BTU</th></tr></thead>
+        <tbody id="hlBody"></tbody>
+      </table>
+      <div style="padding:16px">
+        <div class="total-row">
+          <span>Total Heatload BTU</span>
+          <span class="val" id="totalHeatBtu">0</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ENVIRONMENTAL FACTORS -->
+  <div class="card">
+    <div class="card-head">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Environmental Factors
+    </div>
+    <div class="card-body">
+      <div class="env-row">
+        <div class="env-label">
+          <strong>Low Clearance — Ceiling to Roof</strong>
+          <span>Minimum 1m gap required. If clearance is low, add 15%.</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="toggle-group" id="lcGroup" style="min-width:110px">
+            <button onclick="setToggle('lcGroup',this,'Yes');calc()">Yes</button>
+            <button class="active" onclick="setToggle('lcGroup',this,'No');calc()">No</button>
+          </div>
+          <div class="env-val" id="lcVal">+0</div>
+        </div>
+      </div>
+      <div class="env-row">
+        <div class="env-label">
+          <strong>No Roof Insulation</strong>
+          <span>If there is no insulation, add 20%.</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="toggle-group" id="riGroup" style="min-width:110px">
+            <button onclick="setToggle('riGroup',this,'Yes');calc()">Yes</button>
+            <button class="active" onclick="setToggle('riGroup',this,'No');calc()">No</button>
+          </div>
+          <div class="env-val" id="riVal">+0</div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0 10px">
+        <span style="font-weight:600;color:var(--grey);font-size:.88rem">Base Cooling + Heatload</span>
+        <span style="font-weight:700;color:var(--blue-dark)" id="baseTotal">0 BTU</span>
+      </div>
+      <div class="total-row">
+        <span>Total BTU (incl. Environmental)</span>
+        <span class="val" id="totalBtu">0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULT -->
+  <div class="result-card" id="resultCard">
+    <div class="result-label">Recommended Aircon Capacity</div>
+    <div>
+      <span class="result-hp" id="resultHP">0.00</span><span class="result-unit">HP</span>
+    </div>
+    <div class="result-sub" id="resultGuide">Enter room measurements to see recommendation</div>
+    <div class="result-btu">
+      <div class="btu-chip" id="chip_cool">Cooling: 0 BTU</div>
+      <div class="btu-chip" id="chip_heat">Heatload: 0 BTU</div>
+      <div class="btu-chip" id="chip_total">Total: 0 BTU</div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="window.print()">Print / Save PDF</button>
+    <button class="btn btn-outline" onclick="resetAll()">Reset</button>
+  </div>
+
+</div>
+
+<!-- HELP BUTTON -->
+<button class="help-btn" onclick="document.getElementById('helpModal').classList.add('open')" aria-label="How to use">?</button>
+
+<!-- HELP MODAL -->
+<div class="modal-overlay" id="helpModal" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal">
+    <div class="modal-head">
+      <span>How to Use</span>
+      <button class="modal-close" onclick="document.getElementById('helpModal').classList.remove('open')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <h3>1. Client Information</h3>
+      <p>Fill in the client's name, contact number, address, and survey date. Select the property type and area where the aircon will be installed.</p>
+
+      <h3>2. Room Measurement</h3>
+      <ol>
+        <li>Enter the room's <strong>length</strong> and <strong>width</strong> in meters. The floor area calculates automatically.</li>
+        <li>Toggle <strong>Direct Sunlight</strong> to "Yes" if the room gets direct sun exposure (adds 15%).</li>
+        <li>If the ceiling is higher than the standard 2.9m, enter the <strong>excess meters</strong> (adds 7% per meter).</li>
+      </ol>
+
+      <h3>3. Internal Heat Load</h3>
+      <p>Enter the <strong>quantity</strong> of each heat-producing item in the room (people, appliances, lights, etc.). Each item has a fixed BTU value that gets added to the total.</p>
+
+      <h3>4. Environmental Factors</h3>
+      <ol>
+        <li><strong>Low Clearance</strong> &mdash; Toggle "Yes" if the gap between ceiling and roof is less than 1 meter (adds 15%).</li>
+        <li><strong>No Roof Insulation</strong> &mdash; Toggle "Yes" if the roof has no insulation (adds 20%).</li>
+      </ol>
+
+      <h3>5. Result</h3>
+      <p>The recommended HP is calculated as: <strong>Total BTU &divide; 9,000</strong>. Use this as a guide to recommend the right aircon unit to the client.</p>
+
+      <div class="tip">
+        <strong>Tip:</strong> Use the "Print / Save PDF" button to generate a professional summary you can share with the client.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Heat load items ──────────────────────────────────────────────────────
+const ITEMS = [
+  { name: 'People',                     btu: 550  },
+  { name: 'Windows',                    btu: 600  },
+  { name: 'Lights',                     btu: 60   },
+  { name: 'LED TV 32\u201350\u2033',    btu: 400  },
+  { name: 'LED TV 55\u2013100\u2033',   btu: 700  },
+  { name: 'Gas Stove / Electric Stove', btu: 1000 },
+  { name: 'Side-by-Side Ref',           btu: 1000 },
+  { name: 'Small Ref',                  btu: 400  },
+  { name: 'Big Ref',                    btu: 700  },
+  { name: 'Computer / Laptop',          btu: 500  },
+  { name: 'Oven / Rice Cooker',         btu: 200  },
+];
+
+// ── State for toggles ────────────────────────────────────────────────────
+const state = { typeGroup:'Residential', sunGroup:'No', lcGroup:'No', riGroup:'No' };
+
+function setToggle(groupId, btn, val) {
+  state[groupId] = val;
+  const grp = document.getElementById(groupId);
+  grp.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  calc();
+}
+
+// ── Build heat load table ────────────────────────────────────────────────
+const tbody = document.getElementById('hlBody');
+ITEMS.forEach((item, i) => {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td>${item.name}</td>
+    <td>${item.btu.toLocaleString()}</td>
+    <td><input class="qty-input" type="number" id="qty_${i}" value="0" min="0" oninput="calc()"></td>
+    <td id="hlTotal_${i}">0</td>
+  `;
+  tbody.appendChild(tr);
+});
+
+// ── Formatter ────────────────────────────────────────────────────────────
+const fmt = n => Math.round(n).toLocaleString();
+
+// ── Main calculation ─────────────────────────────────────────────────────
+function calc() {
+  const len  = parseFloat(document.getElementById('length').value) || 0;
+  const wid  = parseFloat(document.getElementById('width').value)  || 0;
+  const ceil = parseFloat(document.getElementById('ceilExcess').value) || 0;
+
+  const floorArea = len * wid;
+  const baseBtu   = floorArea * 600;
+  const sunAdj    = state.sunGroup === 'Yes' ? baseBtu * 0.15 : 0;
+  const ceilAdj   = ceil * 0.07 * baseBtu;
+  const coolBtu   = baseBtu + sunAdj + ceilAdj;
+
+  let heatBtu = 0;
+  ITEMS.forEach((item, i) => {
+    const qty = parseInt(document.getElementById(`qty_${i}`).value) || 0;
+    const tot = item.btu * qty;
+    heatBtu += tot;
+    document.getElementById(`hlTotal_${i}`).textContent = tot > 0 ? fmt(tot) : '\u2014';
+  });
+
+  const baseTotal = coolBtu + heatBtu;
+  const lcAdj = state.lcGroup === 'Yes' ? baseTotal * 0.15 : 0;
+  const riAdj = state.riGroup === 'Yes' ? baseTotal * 0.20 : 0;
+  const totalBtu = baseTotal + lcAdj + riAdj;
+  const hp = totalBtu / 9000;
+
+  // Update DOM
+  document.getElementById('floorArea').textContent   = floorArea.toFixed(2) + ' sqm';
+  document.getElementById('sc_fa').textContent        = floorArea.toFixed(2) + ' sqm';
+  document.getElementById('sc_basebtu').textContent   = fmt(baseBtu) + ' BTU';
+  document.getElementById('totalCoolBtu').textContent = fmt(coolBtu) + ' BTU';
+  document.getElementById('totalHeatBtu').textContent = fmt(heatBtu) + ' BTU';
+  document.getElementById('baseTotal').textContent    = fmt(baseTotal) + ' BTU';
+  document.getElementById('lcVal').textContent        = lcAdj > 0 ? '+' + fmt(lcAdj) + ' BTU' : '+0';
+  document.getElementById('riVal').textContent        = riAdj > 0 ? '+' + fmt(riAdj) + ' BTU' : '+0';
+  document.getElementById('totalBtu').textContent     = fmt(totalBtu) + ' BTU';
+  document.getElementById('resultHP').textContent     = hp.toFixed(2);
+  document.getElementById('chip_cool').textContent    = 'Cooling: ' + fmt(coolBtu) + ' BTU';
+  document.getElementById('chip_heat').textContent    = 'Heatload: ' + fmt(heatBtu) + ' BTU';
+  document.getElementById('chip_total').textContent   = 'Total: ' + fmt(totalBtu) + ' BTU';
+
+  // Guide text
+  let guide = '';
+  if (hp <= 0) guide = 'Enter room measurements to see recommendation';
+  else if (hp <= 0.75) guide = 'Light cooling needed \u2014 \u00BE HP unit suitable';
+  else if (hp <= 1.0)  guide = 'Standard room \u2014 1.0 HP unit recommended';
+  else if (hp <= 1.5)  guide = 'Medium load \u2014 1.5 HP unit recommended';
+  else if (hp <= 2.0)  guide = 'High load \u2014 2.0 HP unit recommended';
+  else if (hp <= 2.5)  guide = 'Heavy load \u2014 2.5 HP unit recommended';
+  else                  guide = 'Very heavy load \u2014 consider multiple units or 3.0 HP+';
+  document.getElementById('resultGuide').textContent = guide;
+}
+
+function resetAll() {
+  document.getElementById('clientName').value = '';
+  document.getElementById('contactNum').value = '';
+  document.getElementById('address').value    = '';
+  document.getElementById('surveyDate').value = '';
+  document.getElementById('length').value = '0';
+  document.getElementById('width').value  = '0';
+  document.getElementById('ceilExcess').value = '0';
+  document.getElementById('area').value = 'Bedroom';
+  ITEMS.forEach((_,i) => { document.getElementById(`qty_${i}`).value = '0'; });
+  ['typeGroup','sunGroup','lcGroup','riGroup'].forEach(id => {
+    const grp = document.getElementById(id);
+    const btns = grp.querySelectorAll('button');
+    btns.forEach((b,i) => { b.classList.toggle('active', i === (id === 'typeGroup' ? 0 : 1)); });
+  });
+  state.typeGroup = 'Residential'; state.sunGroup = 'No'; state.lcGroup = 'No'; state.riGroup = 'No';
+  calc();
+}
+
+// Set today as default date
+document.getElementById('surveyDate').valueAsDate = new Date();
+calc();
+</script>
+</body>
+</html>
