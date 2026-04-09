@@ -888,12 +888,17 @@ function copyDetails() {
   const energy  = document.getElementById('energyMonthly').textContent;
   const hours   = document.getElementById('usageHours').value;
 
+  const contact = document.getElementById('contactNum').value || 'N/A';
+  const addr    = document.getElementById('address').value || 'N/A';
+
   const msg = [
     'Hi! I\u2019d like to inquire about aircon installation. Here are my calculator results:',
     '',
     '\uD83C\uDFE0 AirconKing HP Load Calculator Results',
     '',
     'Client: ' + client,
+    'Contact: ' + contact,
+    'Address: ' + addr,
     'Date: ' + date,
     'Room: ' + area + ' (' + pType + ')',
     'Dimensions: ' + len + 'm \u00D7 ' + wid + 'm = ' + fa,
