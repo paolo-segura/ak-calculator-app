@@ -233,16 +233,82 @@
   .step-calc .step-op { color: var(--grey); }
   .step-calc .step-result { font-weight: 800; color: var(--blue-dark); font-size: 1rem; margin-left: auto; }
 
+  /* ── VERDICT BOX ── */
+  .verdict-box {
+    background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2);
+    border-radius: 14px; padding: 16px; text-align: left; margin-top: 18px;
+  }
+  .verdict-box .verdict-label {
+    color: rgba(255,255,255,.55); font-size: .72rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .15em; margin-bottom: 8px;
+  }
+  .verdict-box p { color: white; font-size: .88rem; margin: 4px 0; line-height: 1.45; }
+  .verdict-box .risk { color: rgba(255,255,255,.7); font-size: .8rem; font-style: italic; margin-top: 8px; }
+
+  /* ── ENERGY ESTIMATOR ── */
+  .energy-box {
+    background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2);
+    border-radius: 14px; padding: 16px; text-align: center; margin-top: 14px;
+  }
+  .energy-box .energy-label {
+    color: rgba(255,255,255,.55); font-size: .72rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .15em; margin-bottom: 8px;
+  }
+  .energy-amount { color: white; font-size: 1.8rem; font-weight: 800; }
+  .energy-amount span { font-size: .9rem; font-weight: 400; opacity: .6; }
+  .energy-sub { color: rgba(255,255,255,.6); font-size: .78rem; margin-top: 4px; }
+  .energy-slider { width: 100%; margin-top: 10px; accent-color: #7DD3FC; }
+  .energy-range { display: flex; justify-content: space-between; color: rgba(255,255,255,.5); font-size: .72rem; margin-top: 4px; }
+  .energy-range .current { color: rgba(255,255,255,.85); font-weight: 700; }
+
+  /* ── CONFIDENCE SCORE ── */
+  .confidence-box {
+    background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2);
+    border-radius: 14px; padding: 14px 16px; margin-top: 14px;
+  }
+  .confidence-header { display: flex; justify-content: space-between; font-size: .75rem; color: rgba(255,255,255,.6); margin-bottom: 6px; }
+  .confidence-header .score { color: white; font-weight: 800; }
+  .confidence-track { width: 100%; height: 8px; background: rgba(255,255,255,.2); border-radius: 99px; overflow: hidden; }
+  .confidence-fill { height: 100%; border-radius: 99px; transition: width .5s ease; }
+  .confidence-label { color: rgba(255,255,255,.55); font-size: .75rem; margin-top: 6px; }
+
+  /* ── ACTION BUTTONS ── */
+  .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 6px; }
+  .action-grid .full { grid-column: 1 / -1; }
+  .btn-action {
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    min-height: 44px; padding: 11px 16px; border-radius: 10px;
+    font-size: .88rem; font-weight: 700; cursor: pointer; border: none;
+    transition: transform .15s, box-shadow .15s;
+  }
+  .btn-action:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.15); }
+  .btn-action:active { transform: scale(.97); }
+  .btn-action.primary { background: linear-gradient(90deg, var(--blue-dark), var(--blue-mid)); color: white; }
+  .btn-action.accent { background: linear-gradient(90deg, #0369A1, #0EA5E9); color: white; }
+  .btn-action.outline { background: white; color: var(--blue-dark); border: 2px solid var(--blue-dark); }
+  .btn-action.light { background: white; color: var(--grey); border: 2px solid var(--border); }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+    background: var(--blue-dark); color: white; padding: 10px 24px;
+    border-radius: 10px; font-size: .88rem; font-weight: 600;
+    box-shadow: 0 8px 24px rgba(0,0,0,.25); z-index: 2000;
+    opacity: 0; transition: opacity .3s; pointer-events: none;
+  }
+  .toast.show { opacity: 1; }
+
   /* ── RESPONSIVE ── */
   @media (max-width: 520px) {
     .row2, .row3 { grid-template-columns: 1fr; }
     .result-hp { font-size: 4rem; }
     .logo-wrap { padding: 7px 18px; } header img { height: 44px; }
+    .action-grid { grid-template-columns: 1fr; }
   }
 
   @media print {
     header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .btn-row { display: none; }
+    .btn-row, .action-grid { display: none; }
   }
 </style>
 </head>
@@ -329,7 +395,47 @@
       </div>
       <p style="font-size:.78rem;color:var(--grey);margin-bottom:14px;margin-top:4px">High ceiling adds 7% per meter excess</p>
 
-      <div class="total-row">
+      <div class="row2" style="margin-bottom:14px">
+        <div class="field">
+          <label>Room Orientation</label>
+          <select id="orientation" onchange="calc()">
+            <option value="North">North</option>
+            <option value="South">South</option>
+            <option value="East">East (+7%)</option>
+            <option value="West">West (+12%)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Glass / Window Type</label>
+          <select id="glassType" onchange="calc()">
+            <option value="None">None</option>
+            <option value="Clear">Clear (+10%)</option>
+            <option value="Tinted">Tinted (+5%)</option>
+            <option value="Curtains">Curtains (−5%)</option>
+            <option value="Blinds">Blinds (−3%)</option>
+          </select>
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>Wall Type</label>
+          <select id="wallType" onchange="calc()">
+            <option value="Concrete">Concrete</option>
+            <option value="Wood">Wood (+5%)</option>
+            <option value="Glass">Glass (+15%)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Floor Level</label>
+          <select id="floorLevel" onchange="calc()">
+            <option value="Ground">Ground</option>
+            <option value="Middle">Middle</option>
+            <option value="Top">Top (+10%)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="total-row" style="margin-top:14px">
         <span>Total Cooling Based BTU</span>
         <span class="val" id="totalCoolBtu">0</span>
       </div>
@@ -415,12 +521,90 @@
       <div class="btu-chip" id="chip_heat">Heatload: 0 BTU</div>
       <div class="btu-chip" id="chip_total">Total: 0 BTU</div>
     </div>
+
+    <!-- VERDICT -->
+    <div class="verdict-box" id="verdictBox" style="display:none">
+      <div class="verdict-label">AirconKing Verdict</div>
+      <p>💡 <strong>Recommended:</strong> <span id="verdictRec"></span></p>
+      <p>📝 <strong>Reason:</strong> <span id="verdictReason"></span></p>
+      <p class="risk">⚠️ Risk if lower HP: <span id="verdictRisk"></span></p>
+    </div>
+
+    <!-- ENERGY ESTIMATOR -->
+    <div class="energy-box">
+      <div class="energy-label">Estimated Monthly Electric Cost</div>
+      <div class="energy-amount">~₱<span id="energyMonthly">0</span><span> /month</span></div>
+      <div class="energy-sub">Based on <span id="energyHoursLabel">8</span>hrs/day at ₱10/kWh</div>
+      <input type="range" class="energy-slider" id="usageHours" min="4" max="24" value="8" oninput="calc()">
+      <div class="energy-range">
+        <span>4 hrs</span>
+        <span class="current" id="energyHoursCurrent">8 hrs/day</span>
+        <span>24 hrs</span>
+      </div>
+    </div>
+
+    <!-- CONFIDENCE SCORE -->
+    <div class="confidence-box">
+      <div class="confidence-header">
+        <span style="font-weight:600;text-transform:uppercase;letter-spacing:.1em">Confidence Score</span>
+        <span class="score" id="confScore">55%</span>
+      </div>
+      <div class="confidence-track">
+        <div class="confidence-fill" id="confFill" style="width:55%;background:#f97316"></div>
+      </div>
+      <div class="confidence-label" id="confLabel">Moderate — fill more fields for higher accuracy</div>
+    </div>
   </div>
 
-  <div class="btn-row">
-    <button class="btn btn-primary" onclick="window.print()">Print / Save PDF</button>
-    <button class="btn btn-outline" onclick="resetAll()">Reset</button>
+  <!-- HOW TO INQUIRE -->
+  <div class="card">
+    <div class="card-head">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg>
+      How to Inquire with AirconKing
+    </div>
+    <div class="card-body" style="padding:18px 20px">
+      <div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:16px">
+        <div style="min-width:32px;height:32px;border-radius:50%;background:var(--blue-dark);color:white;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;flex-shrink:0">1</div>
+        <div>
+          <strong style="color:var(--blue-dark);font-size:.92rem">Save your results as an image</strong>
+          <p style="color:var(--grey);font-size:.82rem;margin-top:2px">Tap the <strong>"📸 Save as Image"</strong> button below. The image will be downloaded to your phone.</p>
+        </div>
+      </div>
+      <div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:16px">
+        <div style="min-width:32px;height:32px;border-radius:50%;background:var(--blue-dark);color:white;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;flex-shrink:0">2</div>
+        <div>
+          <strong style="color:var(--blue-dark);font-size:.92rem">Copy the details</strong>
+          <p style="color:var(--grey);font-size:.82rem;margin-top:2px">Tap <strong>"📋 Copy Details"</strong> to copy a ready-made message with all your calculator results.</p>
+        </div>
+      </div>
+      <div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:16px">
+        <div style="min-width:32px;height:32px;border-radius:50%;background:var(--blue-dark);color:white;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;flex-shrink:0">3</div>
+        <div>
+          <strong style="color:var(--blue-dark);font-size:.92rem">Send to AirconKing</strong>
+          <p style="color:var(--grey);font-size:.82rem;margin-top:2px">Tap <strong>"💬 Send to AirconKing"</strong> to open Messenger. Paste the message and attach the saved image.</p>
+        </div>
+      </div>
+      <div style="display:flex;gap:14px;align-items:flex-start">
+        <div style="min-width:32px;height:32px;border-radius:50%;background:var(--green);color:white;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;flex-shrink:0">✓</div>
+        <div>
+          <strong style="color:var(--green);font-size:.92rem">Done! Our team will respond shortly.</strong>
+          <p style="color:var(--grey);font-size:.82rem;margin-top:2px">An AirconKing agent will review your results and get back to you with a quote and available units.</p>
+        </div>
+      </div>
+    </div>
   </div>
+
+  <!-- ACTION BUTTONS -->
+  <div class="action-grid">
+    <button class="btn-action primary" onclick="saveAsImage()">📸 Save as Image</button>
+    <button class="btn-action outline" onclick="copyDetails()">📋 Copy Details</button>
+    <button class="btn-action accent full" onclick="window.open('https://m.me/AirconKingBulacan','_blank')">💬 Send to AirconKing</button>
+    <button class="btn-action outline" onclick="window.print()">🖨️ Print / Save PDF</button>
+    <button class="btn-action light" onclick="resetAll()">↺ Reset</button>
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast">Copied!</div>
 
 </div>
 
@@ -464,6 +648,9 @@
   </div>
 </div>
 
+<!-- html2canvas CDN for Save as Image -->
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
 <script>
 // ── Heat load items ──────────────────────────────────────────────────────
 const ITEMS = [
@@ -479,6 +666,19 @@ const ITEMS = [
   { name: 'Computer / Laptop',          btu: 500  },
   { name: 'Oven / Rice Cooker',         btu: 200  },
 ];
+
+// ── Adjustment maps ──────────────────────────────────────────────────────
+const ORIENT_ADJ = { North: 0, South: 0, East: 0.07, West: 0.12 };
+const GLASS_ADJ  = { None: 0, Clear: 0.10, Tinted: 0.05, Curtains: -0.05, Blinds: -0.03 };
+const WALL_ADJ   = { Concrete: 0, Wood: 0.05, Glass: 0.15 };
+const FLOOR_ADJ  = { Ground: 0, Middle: 0, Top: 0.10 };
+
+// ── Standard HP brackets ─────────────────────────────────────────────────
+function snapHp(raw) {
+  const brackets = [0.5, 0.75, 1.0, 1.5, 2.0, 2.5, 3.0];
+  for (const b of brackets) { if (raw <= b * 1.15) return b; }
+  return Math.ceil(raw * 2) / 2;
+}
 
 // ── State for toggles ────────────────────────────────────────────────────
 const state = { typeGroup:'Residential', sunGroup:'No', lcGroup:'No', riGroup:'No' };
@@ -513,12 +713,25 @@ function calc() {
   const wid  = parseFloat(document.getElementById('width').value)  || 0;
   const ceil = parseFloat(document.getElementById('ceilExcess').value) || 0;
 
+  const orient = document.getElementById('orientation').value;
+  const glass  = document.getElementById('glassType').value;
+  const wall   = document.getElementById('wallType').value;
+  const floor  = document.getElementById('floorLevel').value;
+  const hours  = parseInt(document.getElementById('usageHours').value) || 8;
+
   const floorArea = len * wid;
   const baseBtu   = floorArea * 600;
+
+  // Cooling adjustments (all % of baseBtu)
   const sunAdj    = state.sunGroup === 'Yes' ? baseBtu * 0.15 : 0;
   const ceilAdj   = ceil * 0.07 * baseBtu;
-  const coolBtu   = baseBtu + sunAdj + ceilAdj;
+  const orientAdj = baseBtu * (ORIENT_ADJ[orient] || 0);
+  const glassAdj  = baseBtu * (GLASS_ADJ[glass]   || 0);
+  const wallAdj   = baseBtu * (WALL_ADJ[wall]     || 0);
+  const floorAdj  = baseBtu * (FLOOR_ADJ[floor]   || 0);
+  const coolBtu   = baseBtu + sunAdj + ceilAdj + orientAdj + glassAdj + wallAdj + floorAdj;
 
+  // Heat load
   let heatBtu = 0;
   ITEMS.forEach((item, i) => {
     const qty = parseInt(document.getElementById(`qty_${i}`).value) || 0;
@@ -531,9 +744,10 @@ function calc() {
   const lcAdj = state.lcGroup === 'Yes' ? baseTotal * 0.15 : 0;
   const riAdj = state.riGroup === 'Yes' ? baseTotal * 0.20 : 0;
   const totalBtu = baseTotal + lcAdj + riAdj;
-  const hp = totalBtu / 9000;
+  const rawHp = totalBtu / 9000;
+  const hp = snapHp(rawHp);
 
-  // Update DOM
+  // ── Update DOM: base fields ────────────────────────────────────────────
   document.getElementById('floorArea').textContent   = floorArea.toFixed(2) + ' sqm';
   document.getElementById('sc_fa').textContent        = floorArea.toFixed(2) + ' sqm';
   document.getElementById('sc_basebtu').textContent   = fmt(baseBtu) + ' BTU';
@@ -548,7 +762,7 @@ function calc() {
   document.getElementById('chip_heat').textContent    = 'Heatload: ' + fmt(heatBtu) + ' BTU';
   document.getElementById('chip_total').textContent   = 'Total: ' + fmt(totalBtu) + ' BTU';
 
-  // Guide text
+  // ── Guide text ─────────────────────────────────────────────────────────
   let guide = '';
   if (hp <= 0) guide = 'Enter room measurements to see recommendation';
   else if (hp <= 0.75) guide = 'Light cooling needed \u2014 \u00BE HP unit suitable';
@@ -558,8 +772,65 @@ function calc() {
   else if (hp <= 2.5)  guide = 'Heavy load \u2014 2.5 HP unit recommended';
   else                  guide = 'Very heavy load \u2014 consider multiple units or 3.0 HP+';
   document.getElementById('resultGuide').textContent = guide;
+
+  // ── Verdict ────────────────────────────────────────────────────────────
+  const verdictBox = document.getElementById('verdictBox');
+  if (hp > 0) {
+    verdictBox.style.display = 'block';
+    const reasons = [];
+    if (state.sunGroup === 'Yes') reasons.push('direct sunlight');
+    if (orient === 'West')  reasons.push('west-facing (+12%)');
+    if (orient === 'East')  reasons.push('east-facing (+7%)');
+    if (glass === 'Clear')  reasons.push('clear glass windows (+10%)');
+    if (wall === 'Glass')   reasons.push('glass walls (+15%)');
+    if (wall === 'Wood')    reasons.push('wood walls (+5%)');
+    if (floor === 'Top')    reasons.push('top floor (+10%)');
+    if (heatBtu > 2000)     reasons.push('high internal heat load');
+
+    const area = document.getElementById('area').value;
+    const reasonText = reasons.length > 0 ? reasons.join(', ') : 'standard ' + area.toLowerCase() + ' conditions';
+
+    document.getElementById('verdictRec').textContent = hp.toFixed(2) + ' HP Split Type Inverter';
+    document.getElementById('verdictReason').textContent = reasonText;
+    document.getElementById('verdictRisk').textContent = 'Hindi lalamig ng maayos + mataas ang kuryente kung mas mababa ang HP.';
+  } else {
+    verdictBox.style.display = 'none';
+  }
+
+  // ── Energy estimator ───────────────────────────────────────────────────
+  const kw = hp * 0.746;
+  const monthly = Math.round(kw * hours * 10 * 30);
+  document.getElementById('energyMonthly').textContent = monthly.toLocaleString();
+  document.getElementById('energyHoursLabel').textContent = hours;
+  document.getElementById('energyHoursCurrent').textContent = hours + ' hrs/day';
+
+  // ── Confidence score ───────────────────────────────────────────────────
+  let conf = 40;
+  if (len > 0) conf += 5;
+  if (wid > 0) conf += 5;
+  if (document.getElementById('clientName').value) conf += 5;
+  if (document.getElementById('contactNum').value) conf += 5;
+  if (document.getElementById('address').value) conf += 5;
+  if (orient !== 'North') conf += 8;
+  if (glass !== 'None') conf += 8;
+  if (wall !== 'Concrete') conf += 5;
+  if (floor !== 'Ground') conf += 5;
+  if (ceil > 0) conf += 4;
+  if (heatBtu > 0) conf += 5;
+  conf = Math.min(conf, 98);
+
+  let confColor, confText;
+  if (conf >= 85) { confColor = '#22c55e'; confText = 'High confidence \u2014 complete inputs provided'; }
+  else if (conf >= 65) { confColor = '#eab308'; confText = 'Good confidence \u2014 most inputs filled'; }
+  else { confColor = '#f97316'; confText = 'Moderate \u2014 fill more fields for higher accuracy'; }
+
+  document.getElementById('confScore').textContent = conf + '%';
+  document.getElementById('confFill').style.width = conf + '%';
+  document.getElementById('confFill').style.background = confColor;
+  document.getElementById('confLabel').textContent = confText;
 }
 
+// ── Reset ────────────────────────────────────────────────────────────────
 function resetAll() {
   document.getElementById('clientName').value = '';
   document.getElementById('contactNum').value = '';
@@ -569,6 +840,11 @@ function resetAll() {
   document.getElementById('width').value  = '0';
   document.getElementById('ceilExcess').value = '0';
   document.getElementById('area').value = 'Bedroom';
+  document.getElementById('orientation').value = 'North';
+  document.getElementById('glassType').value = 'None';
+  document.getElementById('wallType').value = 'Concrete';
+  document.getElementById('floorLevel').value = 'Ground';
+  document.getElementById('usageHours').value = '8';
   ITEMS.forEach((_,i) => { document.getElementById(`qty_${i}`).value = '0'; });
   ['typeGroup','sunGroup','lcGroup','riGroup'].forEach(id => {
     const grp = document.getElementById(id);
@@ -579,7 +855,87 @@ function resetAll() {
   calc();
 }
 
-// Set today as default date
+// ── Save as Image ────────────────────────────────────────────────────────
+function saveAsImage() {
+  const el = document.getElementById('resultCard');
+  if (!el) return;
+  html2canvas(el, { backgroundColor: null, scale: 2, useCORS: true }).then(canvas => {
+    const name = document.getElementById('clientName').value || 'calculator';
+    const link = document.createElement('a');
+    link.download = 'AirconKing-Result-' + name + '.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  }).catch(() => {
+    alert('Could not generate image. Use Print / Save PDF instead.');
+  });
+}
+
+// ── Copy Details ─────────────────────────────────────────────────────────
+function copyDetails() {
+  const client = document.getElementById('clientName').value || 'N/A';
+  const date   = document.getElementById('surveyDate').value;
+  const area   = document.getElementById('area').value;
+  const pType  = state.typeGroup;
+  const len    = document.getElementById('length').value;
+  const wid    = document.getElementById('width').value;
+  const fa     = document.getElementById('floorArea').textContent;
+  const hp     = document.getElementById('resultHP').textContent;
+  const total  = document.getElementById('totalBtu').textContent;
+  const cool   = document.getElementById('totalCoolBtu').textContent;
+  const heat   = document.getElementById('totalHeatBtu').textContent;
+  const verdict = document.getElementById('verdictRec').textContent;
+  const reason  = document.getElementById('verdictReason').textContent;
+  const energy  = document.getElementById('energyMonthly').textContent;
+  const hours   = document.getElementById('usageHours').value;
+
+  const msg = [
+    'Hi! I\u2019d like to inquire about aircon installation. Here are my calculator results:',
+    '',
+    '\uD83C\uDFE0 AirconKing HP Load Calculator Results',
+    '',
+    'Client: ' + client,
+    'Date: ' + date,
+    'Room: ' + area + ' (' + pType + ')',
+    'Dimensions: ' + len + 'm \u00D7 ' + wid + 'm = ' + fa,
+    '',
+    '\uD83D\uDCCA Results:',
+    'Recommended: ' + hp + ' HP',
+    'Total BTU: ' + total,
+    'Cooling BTU: ' + cool,
+    'Heatload BTU: ' + heat,
+    '',
+    '\uD83D\uDCA1 ' + verdict,
+    '\uD83D\uDCDD ' + reason,
+    '',
+    '\uD83D\uDCB0 Est. Monthly Bill: ~\u20B1' + energy,
+    '(' + hours + 'hrs/day at \u20B110/kWh)',
+    '',
+    'Powered by AirconKing Cooling Analysis System',
+  ].join('\n');
+
+  navigator.clipboard.writeText(msg).then(() => {
+    showToast('Copied to clipboard!');
+  }).catch(() => {
+    // Fallback for older browsers
+    const ta = document.createElement('textarea');
+    ta.value = msg;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast('Copied to clipboard!');
+  });
+}
+
+// ── Toast ────────────────────────────────────────────────────────────────
+function showToast(text) {
+  const t = document.getElementById('toast');
+  t.textContent = text;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// ── Init ─────────────────────────────────────────────────────────────────
 document.getElementById('surveyDate').valueAsDate = new Date();
 calc();
 </script>
