@@ -530,17 +530,22 @@
       <p class="risk">⚠️ Risk if lower HP: <span id="verdictRisk"></span></p>
     </div>
 
-    <!-- ENERGY ESTIMATOR -->
+    <!-- ESTIMATED MONTHLY ELECTRIC COST -->
     <div class="energy-box">
-      <div class="energy-label">📅 Monthly Estimate</div>
-      <div class="energy-amount">~₱<span id="energyMonthly">0</span><span> /month</span></div>
-      <div class="energy-sub">Based on <span id="energyHoursLabel">8</span>hrs/day × 30 days at ₱<span id="rateLabel">11.5</span>/kWh</div>
+      <div class="energy-label">💰 Estimated Monthly Electric Cost</div>
+      <div class="energy-amount">~₱<span id="rangeTipid2">0</span> – ₱<span id="rangeHeavy2">0</span><span> /month</span></div>
+      <div style="color:rgba(255,255,255,.55);font-size:.78rem;margin-top:8px;text-align:left">
+        📊 Based on:<br>
+        <span style="margin-left:16px">• <span id="hpLabel">1.0</span> HP Inverter Aircon</span><br>
+        <span style="margin-left:16px">• <span id="energyHoursLabel">8</span> hours usage per day</span><br>
+        <span style="margin-left:16px">• ₱<span id="rateLabel">13</span>/kWh Meralco rate</span>
+      </div>
 
       <!-- Usage hours slider -->
-      <div style="margin-top:12px">
+      <div style="margin-top:14px">
         <div style="display:flex;justify-content:space-between;color:rgba(255,255,255,.5);font-size:.72rem;margin-bottom:2px">
           <span>Usage hours/day</span>
-          <span class="current" style="color:rgba(255,255,255,.85);font-weight:700" id="energyHoursCurrent">8 hrs/day</span>
+          <span style="color:rgba(255,255,255,.85);font-weight:700" id="energyHoursCurrent">8 hrs/day</span>
         </div>
         <input type="range" class="energy-slider" id="usageHours" min="4" max="24" value="8" oninput="calc()">
         <div class="energy-range"><span>4 hrs</span><span>24 hrs</span></div>
@@ -550,46 +555,42 @@
       <div style="margin-top:10px">
         <div style="display:flex;justify-content:space-between;color:rgba(255,255,255,.5);font-size:.72rem;margin-bottom:2px">
           <span>Meralco rate (₱/kWh)</span>
-          <span style="color:rgba(255,255,255,.85);font-weight:700" id="rateCurrentLabel">₱11.50/kWh</span>
+          <span style="color:rgba(255,255,255,.85);font-weight:700" id="rateCurrentLabel">₱13.00/kWh</span>
         </div>
-        <input type="range" class="energy-slider" id="meralcoRate" min="8" max="16" value="11.5" step="0.5" oninput="calc()">
-        <div class="energy-range"><span>₱8</span><span>₱16</span></div>
+        <input type="range" class="energy-slider" id="meralcoRate" min="8" max="18" value="13" step="0.5" oninput="calc()">
+        <div class="energy-range"><span>₱8</span><span>₱18</span></div>
       </div>
 
       <!-- Divider -->
       <div style="height:1px;background:rgba(255,255,255,.15);margin:14px 0"></div>
 
-      <!-- Simple breakdown table -->
-      <div class="energy-label" style="margin-bottom:8px">🎯 Simple Breakdown</div>
+      <!-- Cost per usage -->
+      <div class="energy-label" style="margin-bottom:8px">⚡ Estimated Cost Per Usage</div>
       <table style="width:100%;border-collapse:collapse;font-size:.82rem;color:white">
         <tr style="border-bottom:1px solid rgba(255,255,255,.12)">
           <td style="padding:6px 0;color:rgba(255,255,255,.65)">Per hour</td>
           <td style="padding:6px 0;text-align:right;font-weight:700" id="costPerHour">—</td>
         </tr>
-        <tr style="border-bottom:1px solid rgba(255,255,255,.12)">
-          <td style="padding:6px 0;color:rgba(255,255,255,.65)">Per night (<span id="hoursPerNight">8</span> hrs)</td>
-          <td style="padding:6px 0;text-align:right;font-weight:700" id="costPerNight">—</td>
-        </tr>
         <tr>
-          <td style="padding:6px 0;color:rgba(255,255,255,.65)">Per month (30 days)</td>
-          <td style="padding:6px 0;text-align:right;font-weight:700" id="costPerMonth">—</td>
+          <td style="padding:6px 0;color:rgba(255,255,255,.65)"><span id="hoursPerNight">8</span> hours (overnight)</td>
+          <td style="padding:6px 0;text-align:right;font-weight:700" id="costPerNight">—</td>
         </tr>
       </table>
 
-      <!-- Range -->
+      <!-- Divider -->
       <div style="height:1px;background:rgba(255,255,255,.15);margin:12px 0"></div>
-      <div class="energy-label" style="margin-bottom:6px">💰 Monthly Range</div>
-      <div style="display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:4px">
-        <span style="color:rgba(255,255,255,.65)">😊 Tipid usage (inverter steady)</span>
-        <span style="color:#86efac;font-weight:700" id="rangeTipid">—</span>
+
+      <!-- Note -->
+      <div style="color:rgba(255,255,255,.55);font-size:.75rem;line-height:1.5;text-align:left">
+        📝 <strong style="color:rgba(255,255,255,.75)">NOTE:</strong> Estimated cost only. Computation is based on ₱<span id="rateNote">13</span>/kWh rate, night-time usage, properly sized unit, and closed room (hindi bukas-sara ang pinto/bintana). Actual cost may vary depending on room condition, heat load, and usage habits.
       </div>
-      <div style="display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:4px">
-        <span style="color:rgba(255,255,255,.65)">👍 Average</span>
-        <span style="color:white;font-weight:700" id="rangeAvg">—</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;font-size:.82rem">
-        <span style="color:rgba(255,255,255,.65)">🔥 Medyo heavy</span>
-        <span style="color:#fca5a5;font-weight:700" id="rangeHeavy">—</span>
+
+      <!-- Divider -->
+      <div style="height:1px;background:rgba(255,255,255,.15);margin:12px 0"></div>
+
+      <!-- Inverter tip -->
+      <div style="color:rgba(255,255,255,.7);font-size:.78rem;text-align:left;line-height:1.5">
+        💡 <strong>Mas tipid ang inverter</strong> kapag tuloy-tuloy ang gamit dahil nagla-low power mode na lang once malamig na ang room.
       </div>
     </div>
 
@@ -848,36 +849,35 @@ function calc() {
   }
 
   // ── Energy estimator ───────────────────────────────────────────────────
-  const rate = parseFloat(document.getElementById('meralcoRate').value) || 11.5;
+  const rate = parseFloat(document.getElementById('meralcoRate').value) || 13;
   const kw = hp * 0.746;
 
-  // Per hour / night / month (average = 80% load for inverter)
-  const perHourAvg  = kw * rate * 0.80;
-  const perNightAvg = perHourAvg * hours;
-  const perMonthAvg = perNightAvg * 30;
+  // Tipid (inverter steady ~60%), Heavy (full load 100%)
+  const perHourTipid  = kw * rate * 0.60;
+  const perHourHeavy  = kw * rate * 1.00;
+  const perNightTipid = perHourTipid * hours;
+  const perNightHeavy = perHourHeavy * hours;
+  const perMonthTipid = perNightTipid * 30;
+  const perMonthHeavy = perNightHeavy * 30;
 
-  // Range: tipid (60% load), heavy (100% load)
-  const perMonthTipid = kw * rate * 0.60 * hours * 30;
-  const perMonthHeavy = kw * rate * 1.00 * hours * 30;
+  const p = n => Math.round(n).toLocaleString();
 
-  document.getElementById('energyMonthly').textContent = Math.round(perMonthAvg).toLocaleString();
+  // Header range
+  document.getElementById('rangeTipid2').textContent = p(perMonthTipid);
+  document.getElementById('rangeHeavy2').textContent = p(perMonthHeavy);
+
+  // Based on details
+  document.getElementById('hpLabel').textContent = hp.toFixed(1);
   document.getElementById('energyHoursLabel').textContent = hours;
   document.getElementById('energyHoursCurrent').textContent = hours + ' hrs/day';
-  document.getElementById('rateLabel').textContent = rate.toFixed(1);
+  document.getElementById('rateLabel').textContent = rate % 1 === 0 ? rate : rate.toFixed(1);
   document.getElementById('rateCurrentLabel').textContent = '\u20B1' + rate.toFixed(2) + '/kWh';
+  document.getElementById('rateNote').textContent = rate % 1 === 0 ? rate : rate.toFixed(1);
   document.getElementById('hoursPerNight').textContent = hours;
 
-  // Breakdown table
-  const p = n => '\u20B1' + Math.round(n).toLocaleString();
-  const r = (lo, hi) => '\u20B1' + Math.round(lo).toLocaleString() + ' – \u20B1' + Math.round(hi).toLocaleString();
-  document.getElementById('costPerHour').textContent  = r(kw * rate * 0.60, kw * rate * 1.0);
-  document.getElementById('costPerNight').textContent = r(kw * rate * 0.60 * hours, kw * rate * 1.0 * hours);
-  document.getElementById('costPerMonth').textContent = r(perMonthTipid, perMonthHeavy);
-
-  // Range
-  document.getElementById('rangeTipid').textContent = p(perMonthTipid) + '/mo';
-  document.getElementById('rangeAvg').textContent   = p(perMonthAvg)   + '/mo';
-  document.getElementById('rangeHeavy').textContent  = p(perMonthHeavy) + '/mo';
+  // Cost per usage
+  document.getElementById('costPerHour').textContent  = '\u20B1' + p(perHourTipid)  + ' \u2013 \u20B1' + p(perHourHeavy);
+  document.getElementById('costPerNight').textContent = '\u20B1' + p(perNightTipid) + ' \u2013 \u20B1' + p(perNightHeavy);
 
   // ── Confidence score ───────────────────────────────────────────────────
   let conf = 40;
@@ -960,14 +960,12 @@ function copyDetails() {
   const heat   = document.getElementById('totalHeatBtu').textContent;
   const verdict = document.getElementById('verdictRec').textContent;
   const reason  = document.getElementById('verdictReason').textContent;
-  const energy     = document.getElementById('energyMonthly').textContent;
   const hours      = document.getElementById('usageHours').value;
   const mRate      = document.getElementById('meralcoRate').value;
-  const rangeTipid = document.getElementById('rangeTipid').textContent;
-  const rangeAvg   = document.getElementById('rangeAvg').textContent;
-  const rangeHeavy = document.getElementById('rangeHeavy').textContent;
   const perHour    = document.getElementById('costPerHour').textContent;
   const perNight   = document.getElementById('costPerNight').textContent;
+  const moTipid    = document.getElementById('rangeTipid2').textContent;
+  const moHeavy    = document.getElementById('rangeHeavy2').textContent;
 
   const contact = document.getElementById('contactNum').value || 'N/A';
   const addr    = document.getElementById('address').value || 'N/A';
@@ -993,17 +991,14 @@ function copyDetails() {
     '\uD83D\uDCA1 ' + verdict,
     '\uD83D\uDCDD ' + reason,
     '',
-    '\uD83D\uDCB0 Monthly Estimate: ~\u20B1' + energy + '/month',
-    '(' + hours + 'hrs/day at \u20B1' + mRate + '/kWh)',
+    '\uD83D\uDCB0 Est. Monthly Electric Cost: ~\u20B1' + moTipid + ' \u2013 \u20B1' + moHeavy + '/month',
+    'Based on: ' + hp + ' HP Inverter, ' + hours + 'hrs/day, \u20B1' + mRate + '/kWh Meralco rate',
     '',
-    '\uD83C\uDFAF Simple Breakdown:',
+    '\u26A1 Cost Per Usage:',
     'Per hour: ' + perHour,
-    'Per night (' + hours + 'hrs): ' + perNight,
+    hours + ' hours (overnight): ' + perNight,
     '',
-    '\uD83D\uDCB0 Monthly Range:',
-    '\uD83D\uDE0A Tipid: ' + rangeTipid,
-    '\uD83D\uDC4D Average: ' + rangeAvg,
-    '\uD83D\uDD25 Heavy: ' + rangeHeavy,
+    '\uD83D\uDCA1 Mas tipid ang inverter kapag tuloy-tuloy ang gamit \u2014 nagla-low power mode na lang once malamig na ang room.',
     '',
     'Powered by AirconKing Cooling Analysis System',
   ].join('\n');
