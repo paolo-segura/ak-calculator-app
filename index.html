@@ -244,6 +244,16 @@
   }
   .verdict-box p { color: white; font-size: .88rem; margin: 4px 0; line-height: 1.45; }
   .verdict-box .risk { color: rgba(255,255,255,.7); font-size: .8rem; font-style: italic; margin-top: 8px; }
+  .verdict-options { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+  .verdict-option {
+    background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.18);
+    border-radius: 10px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center;
+  }
+  .verdict-option.recommended { border-color: rgba(255,255,255,.45); background: rgba(255,255,255,.18); }
+  .verdict-option .opt-label { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: rgba(255,255,255,.5); }
+  .verdict-option.recommended .opt-label { color: #7DD3FC; }
+  .verdict-option .opt-desc { color: white; font-size: .85rem; font-weight: 600; margin-top: 2px; }
+  .verdict-option .opt-cost { color: rgba(255,255,255,.7); font-size: .75rem; text-align: right; white-space: nowrap; }
 
   /* ── ENERGY ESTIMATOR ── */
   .energy-box {
@@ -525,9 +535,9 @@
     <!-- VERDICT -->
     <div class="verdict-box" id="verdictBox" style="display:none">
       <div class="verdict-label">AirconKing Verdict</div>
-      <p>💡 <strong>Recommended:</strong> <span id="verdictRec"></span></p>
       <p>📝 <strong>Reason:</strong> <span id="verdictReason"></span></p>
-      <p class="risk">⚠️ Risk if lower HP: <span id="verdictRisk"></span></p>
+      <div class="verdict-options" id="verdictOptions"></div>
+      <p class="risk">⚠️ <span id="verdictRisk"></span></p>
     </div>
 
     <!-- ESTIMATED MONTHLY ELECTRIC COST -->
@@ -725,10 +735,47 @@ const WALL_ADJ   = { Concrete: 0, Wood: 0.05, Glass: 0.15 };
 const FLOOR_ADJ  = { Ground: 0, Middle: 0, Top: 0.10 };
 
 // ── Standard HP brackets ─────────────────────────────────────────────────
+const HP_BRACKETS = [0.5, 0.75, 1.0, 1.5, 2.0, 2.5, 3.0];
+const MAX_SINGLE_HP = 3.0;
+
 function snapHp(raw) {
-  const brackets = [0.5, 0.75, 1.0, 1.5, 2.0, 2.5, 3.0];
-  for (const b of brackets) { if (raw <= b * 1.15) return b; }
-  return Math.ceil(raw * 2) / 2;
+  for (const b of HP_BRACKETS) { if (raw <= b * 1.15) return b; }
+  return MAX_SINGLE_HP; // cap at max real unit size
+}
+
+// Generate all valid unit combos for a given raw HP, sorted by total HP ascending
+function generateOptions(rawHp) {
+  if (rawHp <= MAX_SINGLE_HP * 1.15) {
+    const hp = snapHp(rawHp);
+    const result = [{ hp, units: 1, totalHp: hp }];
+    // Add nearby bracket sizes as alternatives
+    const idx = HP_BRACKETS.indexOf(hp);
+    if (idx > 0) result.push({ hp: HP_BRACKETS[idx - 1], units: 1, totalHp: HP_BRACKETS[idx - 1] });
+    if (idx < HP_BRACKETS.length - 1) result.push({ hp: HP_BRACKETS[idx + 1], units: 1, totalHp: HP_BRACKETS[idx + 1] });
+    // For best fit first, then lower, then higher
+    return result.slice(0, 3);
+  }
+  const opts = [];
+  const seen = new Set();
+  // For multi-unit, only consider 2.0 HP and above to keep unit count practical
+  const minSize = rawHp > 6 ? 2.0 : 1.5;
+  for (const size of [...HP_BRACKETS].reverse()) {
+    if (size < minSize) continue;
+    const count = Math.ceil(rawHp / size);
+    const total = count * size;
+    const key = count + 'x' + size;
+    if (total >= rawHp && total <= rawHp * 1.30 && !seen.has(key)) {
+      seen.add(key);
+      opts.push({ hp: size, units: count, totalHp: total });
+    }
+  }
+  if (opts.length === 0) {
+    const count = Math.ceil(rawHp / MAX_SINGLE_HP);
+    opts.push({ hp: MAX_SINGLE_HP, units: count, totalHp: count * MAX_SINGLE_HP });
+  }
+  // Sort by totalHp ascending, then fewer units preferred
+  opts.sort((a, b) => a.totalHp - b.totalHp || a.units - b.units);
+  return opts.slice(0, 3);
 }
 
 // ── State for toggles ────────────────────────────────────────────────────
@@ -769,6 +816,7 @@ function calc() {
   const wall   = document.getElementById('wallType').value;
   const floor  = document.getElementById('floorLevel').value;
   const hours  = parseInt(document.getElementById('usageHours').value) || 8;
+  const rate   = parseFloat(document.getElementById('meralcoRate').value) || 13;
 
   const floorArea = len * wid;
   const baseBtu   = floorArea * 600;
@@ -796,7 +844,11 @@ function calc() {
   const riAdj = state.riGroup === 'Yes' ? baseTotal * 0.20 : 0;
   const totalBtu = baseTotal + lcAdj + riAdj;
   const rawHp = totalBtu / 9000;
-  const hp = snapHp(rawHp);
+  const options = generateOptions(rawHp);
+  const rec = options[0]; // best fit (lowest sufficient HP)
+  const hp = rec.totalHp;
+  const unitHp = rec.hp;
+  const unitCount = rec.units;
 
   // ── Update DOM: base fields ────────────────────────────────────────────
   document.getElementById('floorArea').textContent   = floorArea.toFixed(2) + ' sqm';
@@ -808,7 +860,7 @@ function calc() {
   document.getElementById('lcVal').textContent        = lcAdj > 0 ? '+' + fmt(lcAdj) + ' BTU' : '+0';
   document.getElementById('riVal').textContent        = riAdj > 0 ? '+' + fmt(riAdj) + ' BTU' : '+0';
   document.getElementById('totalBtu').textContent     = fmt(totalBtu) + ' BTU';
-  document.getElementById('resultHP').textContent     = hp.toFixed(2);
+  document.getElementById('resultHP').textContent     = hp.toFixed(1);
   document.getElementById('chip_cool').textContent    = 'Cooling: ' + fmt(coolBtu) + ' BTU';
   document.getElementById('chip_heat').textContent    = 'Heatload: ' + fmt(heatBtu) + ' BTU';
   document.getElementById('chip_total').textContent   = 'Total: ' + fmt(totalBtu) + ' BTU';
@@ -816,12 +868,13 @@ function calc() {
   // ── Guide text ─────────────────────────────────────────────────────────
   let guide = '';
   if (hp <= 0) guide = 'Enter room measurements to see recommendation';
-  else if (hp <= 0.75) guide = 'Light cooling needed \u2014 \u00BE HP unit suitable';
-  else if (hp <= 1.0)  guide = 'Standard room \u2014 1.0 HP unit recommended';
-  else if (hp <= 1.5)  guide = 'Medium load \u2014 1.5 HP unit recommended';
-  else if (hp <= 2.0)  guide = 'High load \u2014 2.0 HP unit recommended';
-  else if (hp <= 2.5)  guide = 'Heavy load \u2014 2.5 HP unit recommended';
-  else                  guide = 'Very heavy load \u2014 consider multiple units or 3.0 HP+';
+  else if (unitCount > 1) guide = 'Large area \u2014 ' + unitCount + ' units recommended for proper coverage';
+  else if (unitHp <= 0.75) guide = 'Light cooling needed \u2014 \u00BE HP unit suitable';
+  else if (unitHp <= 1.0)  guide = 'Standard room \u2014 1.0 HP unit recommended';
+  else if (unitHp <= 1.5)  guide = 'Medium load \u2014 1.5 HP unit recommended';
+  else if (unitHp <= 2.0)  guide = 'High load \u2014 2.0 HP unit recommended';
+  else if (unitHp <= 2.5)  guide = 'Heavy load \u2014 2.5 HP unit recommended';
+  else                      guide = 'Heavy load \u2014 3.0 HP unit recommended';
   document.getElementById('resultGuide').textContent = guide;
 
   // ── Verdict ────────────────────────────────────────────────────────────
@@ -841,20 +894,41 @@ function calc() {
     const area = document.getElementById('area').value;
     const reasonText = reasons.length > 0 ? reasons.join(', ') : 'standard ' + area.toLowerCase() + ' conditions';
 
-    document.getElementById('verdictRec').textContent = hp.toFixed(2) + ' HP Split Type Inverter';
     document.getElementById('verdictReason').textContent = reasonText;
-    document.getElementById('verdictRisk').textContent = 'Hindi lalamig ng maayos + mataas ang kuryente kung mas mababa ang HP.';
+
+    // Build option cards
+    const optContainer = document.getElementById('verdictOptions');
+    const labels = unitCount > 1
+      ? ['Best Fit', 'Alternative', 'Alternative']
+      : ['Recommended', 'Budget', 'Extra Cooling'];
+    optContainer.innerHTML = options.map((opt, i) => {
+      const isRec = i === 0;
+      const desc = opt.units > 1
+        ? opt.units + '\u00D7 ' + opt.hp.toFixed(1) + ' HP Split Type Inverter'
+        : opt.hp.toFixed(1) + ' HP Split Type Inverter';
+      const kwOpt = opt.totalHp * 0.746;
+      const moLow = Math.round(kwOpt * rate * 0.65 * hours * 30);
+      const moHigh = Math.round(kwOpt * rate * 0.85 * hours * 30);
+      const costStr = '\u20B1' + moLow.toLocaleString() + ' \u2013 \u20B1' + moHigh.toLocaleString() + '/mo';
+      return '<div class="verdict-option' + (isRec ? ' recommended' : '') + '">'
+        + '<div><div class="opt-label">' + (isRec ? '\uD83D\uDCA1 ' : '') + labels[i] + '</div>'
+        + '<div class="opt-desc">' + desc + '</div></div>'
+        + '<div class="opt-cost">' + costStr + '</div></div>';
+    }).join('');
+
+    document.getElementById('verdictRisk').textContent = unitCount > 1
+      ? 'Malaking area \u2014 kailangan ng multiple units para pantay ang lamig sa buong kwarto.'
+      : 'Hindi lalamig ng maayos + mataas ang kuryente kung mas mababa ang HP.';
   } else {
     verdictBox.style.display = 'none';
   }
 
   // ── Energy estimator ───────────────────────────────────────────────────
-  const rate = parseFloat(document.getElementById('meralcoRate').value) || 13;
   const kw = hp * 0.746;
 
-  // Tipid (inverter steady ~60%), Heavy (full load 100%)
-  const perHourTipid  = kw * rate * 0.60;
-  const perHourHeavy  = kw * rate * 1.00;
+  // Tipid (inverter steady ~65%), Heavy (peak cooling ~85%)
+  const perHourTipid  = kw * rate * 0.65;
+  const perHourHeavy  = kw * rate * 0.85;
   const perNightTipid = perHourTipid * hours;
   const perNightHeavy = perHourHeavy * hours;
   const perMonthTipid = perNightTipid * 30;
@@ -958,7 +1032,6 @@ function copyDetails() {
   const total  = document.getElementById('totalBtu').textContent;
   const cool   = document.getElementById('totalCoolBtu').textContent;
   const heat   = document.getElementById('totalHeatBtu').textContent;
-  const verdict = document.getElementById('verdictRec').textContent;
   const reason  = document.getElementById('verdictReason').textContent;
   const hours      = document.getElementById('usageHours').value;
   const mRate      = document.getElementById('meralcoRate').value;
@@ -983,16 +1056,23 @@ function copyDetails() {
     'Dimensions: ' + len + 'm \u00D7 ' + wid + 'm = ' + fa,
     '',
     '\uD83D\uDCCA Results:',
-    'Recommended: ' + hp + ' HP',
+    'Total HP Needed: ' + hp + ' HP',
     'Total BTU: ' + total,
     'Cooling BTU: ' + cool,
     'Heatload BTU: ' + heat,
     '',
-    '\uD83D\uDCA1 ' + verdict,
-    '\uD83D\uDCDD ' + reason,
+    '\uD83D\uDCDD Reason: ' + reason,
+    '',
+    '\uD83D\uDCA1 Options:',
+    ...Array.from(document.querySelectorAll('.verdict-option')).map((el, i) => {
+      const label = el.querySelector('.opt-label').textContent;
+      const desc = el.querySelector('.opt-desc').textContent;
+      const cost = el.querySelector('.opt-cost').textContent;
+      return (i === 0 ? '\u2B50 ' : '\u2022 ') + desc + ' \u2014 ' + cost;
+    }),
     '',
     '\uD83D\uDCB0 Est. Monthly Electric Cost: ~\u20B1' + moTipid + ' \u2013 \u20B1' + moHeavy + '/month',
-    'Based on: ' + hp + ' HP Inverter, ' + hours + 'hrs/day, \u20B1' + mRate + '/kWh Meralco rate',
+    'Based on: ' + document.getElementById('hpLabel').textContent + ' HP Inverter, ' + hours + 'hrs/day, \u20B1' + mRate + '/kWh Meralco rate',
     '',
     '\u26A1 Cost Per Usage:',
     'Per hour: ' + perHour,
