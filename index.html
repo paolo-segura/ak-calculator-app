@@ -1188,6 +1188,16 @@ function renderHpOptions(recHp) {
   const sub = document.getElementById('hpOptionsSub');
   list.innerHTML = '';
 
+  // Pull live values so each card shows its own monthly cost based on current inputs
+  const hours = parseInt(document.getElementById('usageHours').value) || 8;
+  const rate  = parseFloat(document.getElementById('meralcoRate').value) || 13;
+  const monthlyCostRange = (hp, count) => {
+    const totalKw = hp * count * 0.746;
+    const lo = Math.round(totalKw * rate * 0.60 * hours * 30);
+    const hi = Math.round(totalKw * rate * 1.00 * hours * 30);
+    return `~₱${lo.toLocaleString()} – ₱${hi.toLocaleString()}/mo`;
+  };
+
   if (isMultiUnit) {
     // ── Multi-unit mode: show 2 configuration options ────────────────
     label.textContent = '🏷️ Recommended Setups';
@@ -1214,7 +1224,7 @@ function renderHpOptions(recHp) {
         </div>
         <div class="hp-option-right">
           <div class="hp-option-price">₱${totalMin.toLocaleString()} – ₱${totalMax.toLocaleString()}</div>
-          <div class="hp-option-elec">Total for ${cfg.count} units</div>
+          <div class="hp-option-elec">${monthlyCostRange(cfg.hp, cfg.count)}</div>
         </div>
       `;
       div.addEventListener('click', () => selectConfig(cfg.hp, cfg.count));
@@ -1266,7 +1276,10 @@ function renderHpOptions(recHp) {
           <span class="hp-option-hp">${optHp.toFixed(1)} HP</span>
           ${badgeHtml}
         </div>
-        <div class="hp-option-right">${priceHtml}</div>
+        <div class="hp-option-right">
+          ${priceHtml}
+          <div class="hp-option-elec">${monthlyCostRange(optHp, 1)}</div>
+        </div>
       `;
       div.addEventListener('click', () => selectConfig(optHp, 1));
       list.appendChild(div);
