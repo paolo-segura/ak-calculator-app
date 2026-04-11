@@ -3,8 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Aircon King — HP Load Calculator</title>
+<title>AirconKing Cooling Analysis System — HP Load Calculator</title>
 <link rel="icon" type="image/png" href="ak-logo.png">
+<link rel="shortcut icon" type="image/png" href="ak-logo.png">
+<link rel="apple-touch-icon" href="ak-logo.png">
 <style>
   :root {
     --blue-dark:  #0B5394;
@@ -46,10 +48,15 @@
     position: relative;
   }
   header img { height: 58px; display: block; }
+  .brand-name {
+    color: white; font-size: 1.35rem; font-weight: 800;
+    letter-spacing: .02em; margin-top: 14px; position: relative;
+    text-shadow: 0 2px 8px rgba(0,0,0,.2);
+  }
   header h1 {
-    color: white; font-size: 1.05rem; font-weight: 400;
-    letter-spacing: .18em; text-transform: uppercase;
-    margin-top: 12px; opacity: .88; position: relative;
+    color: rgba(255,255,255,.75); font-size: .82rem; font-weight: 500;
+    letter-spacing: .22em; text-transform: uppercase;
+    margin-top: 4px; position: relative;
   }
 
   /* ── WRAPPER ── */
@@ -68,6 +75,35 @@
   }
   .card-head svg { opacity: .85; flex-shrink: 0; }
   .card-body { padding: 20px; }
+
+  /* ── COLLAPSIBLE CARD HEAD ── */
+  button.card-head.collapsible {
+    width: 100%; border: none; cursor: pointer;
+    font-family: inherit; text-align: left;
+    padding: 13px 20px;
+    display: flex; align-items: center; justify-content: space-between;
+    transition: filter .15s;
+  }
+  button.card-head.collapsible:hover { filter: brightness(1.08); }
+  button.card-head.collapsible .chevron {
+    transition: transform .25s ease;
+  }
+  button.card-head.collapsible[aria-expanded="true"] .chevron {
+    transform: rotate(180deg);
+  }
+  .optional-tag {
+    display: inline-block; background: rgba(255,255,255,.22);
+    color: white; font-size: .66rem; font-weight: 700;
+    padding: 2px 8px; border-radius: 99px; letter-spacing: .06em;
+    margin-left: 6px; text-transform: uppercase; vertical-align: middle;
+  }
+  .collapsible-body {
+    animation: slideDown .2s ease-out;
+  }
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
 
   /* ── FORM FIELDS ── */
   .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
@@ -95,6 +131,54 @@
   }
   .toggle-group button.active {
     background: var(--blue-dark); color: white;
+  }
+
+  /* ── ROOM DIAGRAM (inside modal) ── */
+  .room-diagram-wrap {
+    background: linear-gradient(180deg, #F0F7FF 0%, #FFFFFF 100%);
+    border: 1.5px solid var(--border);
+    border-radius: 12px; padding: 14px 12px 10px;
+    margin: 10px 0 14px;
+  }
+  .room-diagram { width: 100%; height: auto; display: block; max-width: 360px; margin: 0 auto; }
+  .diagram-caption {
+    text-align: center; color: var(--grey);
+    font-size: .78rem; line-height: 1.4; margin-top: 6px;
+  }
+  .diagram-caption strong { color: var(--blue-dark); }
+
+  /* ── HELP LINK (inside Room Measurement card) ── */
+  .help-link {
+    display: inline-flex; align-items: center; gap: 6px;
+    color: var(--blue-mid); font-size: .82rem; font-weight: 700;
+    background: none; border: none; padding: 2px 0;
+    cursor: pointer; text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .help-link:hover { color: var(--blue-dark); }
+  .help-link-icon {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--blue-mid); color: white;
+    font-size: .7rem; font-weight: 900;
+  }
+
+  /* ── DIMENSIONS HELP BOX ── */
+  .dimensions-help {
+    background: var(--blue-pale); border-left: 4px solid var(--blue-mid);
+    padding: 12px 14px; border-radius: 0 10px 10px 0;
+    margin-bottom: 16px;
+  }
+  .dimensions-help-title {
+    color: var(--blue-dark); font-weight: 800; font-size: .88rem;
+    margin-bottom: 6px;
+  }
+  .dimensions-help-list {
+    padding-left: 18px; margin: 0;
+  }
+  .dimensions-help-list li {
+    color: var(--blue-dark); font-size: .82rem; line-height: 1.55;
+    margin-bottom: 3px;
   }
 
   /* ── HEAT LOAD TABLE ── */
@@ -244,16 +328,98 @@
   }
   .verdict-box p { color: white; font-size: .88rem; margin: 4px 0; line-height: 1.45; }
   .verdict-box .risk { color: rgba(255,255,255,.7); font-size: .8rem; font-style: italic; margin-top: 8px; }
-  .verdict-options { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
-  .verdict-option {
-    background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.18);
-    border-radius: 10px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center;
+
+  /* ── HP OPTIONS (3 cards) ── */
+  .hp-options {
+    margin-top: 16px; padding-top: 16px;
+    border-top: 1px solid rgba(255,255,255,.18);
   }
-  .verdict-option.recommended { border-color: rgba(255,255,255,.45); background: rgba(255,255,255,.18); }
-  .verdict-option .opt-label { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: rgba(255,255,255,.5); }
-  .verdict-option.recommended .opt-label { color: #7DD3FC; }
-  .verdict-option .opt-desc { color: white; font-size: .85rem; font-weight: 600; margin-top: 2px; }
-  .verdict-option .opt-cost { color: rgba(255,255,255,.7); font-size: .75rem; text-align: right; white-space: nowrap; }
+  .hp-options-label {
+    color: rgba(255,255,255,.55); font-size: .72rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .15em; margin-bottom: 4px;
+  }
+  .hp-options-sub {
+    color: rgba(255,255,255,.5); font-size: .72rem; margin-bottom: 12px;
+  }
+  .hp-option-list { display: flex; flex-direction: column; gap: 8px; }
+  .hp-option {
+    display: flex; justify-content: space-between; align-items: center;
+    background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.15);
+    border-radius: 12px; padding: 11px 14px; transition: transform .18s;
+  }
+  .hp-option.recommended {
+    background: rgba(14,165,233,.35);
+    border-color: rgba(125,211,252,.65);
+    box-shadow: 0 0 0 2px rgba(125,211,252,.35), 0 4px 14px rgba(14,165,233,.25);
+    transform: scale(1.02);
+  }
+  .hp-option-label {
+    display: flex; align-items: center; gap: 8px; min-width: 0;
+  }
+  .hp-option-hp {
+    color: white; font-weight: 800; font-size: .95rem;
+  }
+  .hp-option.recommended .hp-option-hp { font-size: 1.05rem; }
+  .hp-option-badge {
+    background: #0EA5E9; color: white; font-size: .6rem; font-weight: 800;
+    padding: 3px 7px; border-radius: 99px; letter-spacing: .05em;
+    white-space: nowrap;
+  }
+  .hp-option-right { text-align: right; }
+  .hp-option-price {
+    color: white; font-weight: 700; font-size: .82rem; line-height: 1.2;
+  }
+  .hp-option.recommended .hp-option-price { font-size: .88rem; }
+  .hp-option-elec {
+    color: rgba(255,255,255,.55); font-size: .7rem; margin-top: 2px;
+  }
+  .hp-option-nopricing {
+    color: rgba(255,255,255,.5); font-size: .75rem; font-style: italic;
+  }
+  .hp-options-note {
+    color: rgba(255,255,255,.5) !important; font-size: .7rem !important;
+    margin-top: 10px !important; text-align: center;
+    font-style: italic;
+  }
+
+  /* ── FREE INSTALLATION HIGHLIGHT BADGE ── */
+  .free-install-badge {
+    display: flex; align-items: center; gap: 12px;
+    margin-top: 14px; padding: 12px 16px;
+    background: linear-gradient(90deg, rgba(34,197,94,.22), rgba(34,197,94,.08));
+    border: 1.5px solid rgba(74,222,128,.55);
+    border-radius: 12px;
+    box-shadow: 0 0 0 2px rgba(34,197,94,.08);
+  }
+  .free-install-badge .fi-icon {
+    flex-shrink: 0; width: 30px; height: 30px;
+    border-radius: 50%; background: #22c55e; color: white;
+    font-weight: 900; font-size: 1rem;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 8px rgba(34,197,94,.4);
+  }
+  .free-install-badge .fi-title {
+    color: #bbf7d0; font-weight: 900; font-size: .9rem;
+    letter-spacing: .06em; line-height: 1;
+  }
+  .free-install-badge .fi-sub {
+    color: rgba(187,247,208,.7); font-size: .72rem;
+    margin-top: 2px;
+  }
+
+  /* ── ALT BADGE (for Option B in multi mode) ── */
+  .hp-option-badge.alt-badge {
+    background: #8b5cf6 !important;
+  }
+
+  /* ── MULTI-UNIT CONFIG LABEL ── */
+  .multi-config-label {
+    margin-top: 12px; padding: 12px 14px;
+    background: rgba(14,165,233,.2); border: 1.5px solid rgba(125,211,252,.45);
+    border-radius: 10px;
+    color: white; font-weight: 700; font-size: .92rem;
+    text-align: center;
+  }
 
   /* ── ENERGY ESTIMATOR ── */
   .energy-box {
@@ -270,6 +436,101 @@
   .energy-slider { width: 100%; margin-top: 10px; accent-color: #7DD3FC; }
   .energy-range { display: flex; justify-content: space-between; color: rgba(255,255,255,.5); font-size: .72rem; margin-top: 4px; }
   .energy-range .current { color: rgba(255,255,255,.85); font-weight: 700; }
+
+  /* ── HP SELECTOR DROPDOWN ── */
+  .hp-selector-wrap {
+    margin-top: 12px; text-align: left;
+  }
+  .hp-selector-label {
+    display: block; color: rgba(255,255,255,.7); font-size: .72rem;
+    font-weight: 700; text-transform: uppercase; letter-spacing: .12em;
+    margin-bottom: 6px;
+  }
+  .hp-selector {
+    width: 100%; padding: 12px 14px; border-radius: 10px;
+    background: rgba(255,255,255,.15); border: 1.5px solid rgba(255,255,255,.25);
+    color: white; font-size: 1rem; font-weight: 700; cursor: pointer;
+    -webkit-appearance: none; appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 14px center;
+    padding-right: 40px;
+  }
+  .hp-selector:focus { outline: none; border-color: #7DD3FC; box-shadow: 0 0 0 3px rgba(125,211,252,.3); }
+  .hp-selector option { background: #0B5394; color: white; }
+
+  /* ── COST PER USAGE TABLE ── */
+  .cost-usage-table {
+    width: 100%; border-collapse: collapse;
+    background: rgba(255,255,255,.05); border-radius: 10px; overflow: hidden;
+    margin-top: 8px;
+  }
+  .cost-usage-table tr + tr td { border-top: 1px solid rgba(255,255,255,.12); }
+  .cost-usage-table td { padding: 10px 14px; }
+  .cost-usage-table td.label { color: rgba(255,255,255,.7); font-size: .85rem; }
+  .cost-usage-table td.value {
+    text-align: right; color: white; font-weight: 800; font-size: 1rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── MONTHLY COST BIG DISPLAY (small ₱, big numbers) ── */
+  .monthly-cost {
+    display: flex; align-items: baseline; justify-content: center;
+    flex-wrap: wrap; gap: 2px;
+    color: white; text-align: center; margin-top: 8px;
+    font-variant-numeric: tabular-nums;
+  }
+  .monthly-cost .peso {
+    font-size: 1.15rem; font-weight: 600; opacity: .75;
+    margin-right: 1px;
+  }
+  .monthly-cost .amt-min, .monthly-cost .amt-max {
+    font-size: 2.25rem; font-weight: 900; line-height: 1;
+    letter-spacing: -.01em;
+  }
+  .monthly-cost .dash {
+    font-size: 1.4rem; font-weight: 400; opacity: .55;
+    margin: 0 6px; align-self: center;
+  }
+  .monthly-cost .suffix {
+    font-size: .85rem; font-weight: 500; opacity: .6;
+    margin-left: 6px; align-self: center;
+  }
+  .monthly-based-on {
+    display: flex; flex-direction: column; gap: 2px;
+    color: rgba(255,255,255,.55); font-size: .76rem;
+    text-align: left; margin-top: 10px;
+  }
+  .monthly-based-on span { padding-left: 16px; }
+
+  /* ── SLIDERS ── */
+  .slider-head {
+    display: flex; justify-content: space-between;
+    color: rgba(255,255,255,.5); font-size: .72rem; margin-bottom: 2px;
+  }
+  .slider-head .current { color: rgba(255,255,255,.85); font-weight: 700; }
+
+  .energy-disclaimer {
+    color: rgba(255,255,255,.55); font-size: .75rem;
+    line-height: 1.5; text-align: left;
+  }
+  .energy-disclaimer strong { color: rgba(255,255,255,.75); }
+
+  /* ── CLICKABLE HP OPTIONS ── */
+  .hp-option {
+    cursor: pointer; user-select: none;
+  }
+  .hp-option:hover:not(.selected) {
+    background: rgba(255,255,255,.14) !important;
+    transform: translateY(-1px);
+  }
+  .hp-option.selected {
+    background: rgba(14,165,233,.45) !important;
+    border-color: rgba(125,211,252,.8) !important;
+    box-shadow: 0 0 0 2px rgba(125,211,252,.5), 0 6px 18px rgba(14,165,233,.35) !important;
+    transform: scale(1.02);
+  }
+  .hp-option.selected .hp-option-hp { font-size: 1.05rem; }
+  .hp-option.selected .hp-option-price { font-size: .88rem; }
 
   /* ── CONFIDENCE SCORE ── */
   .confidence-box {
@@ -325,7 +586,8 @@
 <body>
 
 <header>
-  <div class="logo-wrap"><img src="ak-logo.png" alt="Aircon King"></div>
+  <div class="logo-wrap"><img src="ak-logo.png" alt="AirconKing"></div>
+  <div class="brand-name">AirconKing Cooling Analysis System</div>
   <h1>HP Load Calculator</h1>
 </header>
 
@@ -376,6 +638,19 @@
       Room Measurement / Base Cooling
     </div>
     <div class="card-body">
+      <div class="dimensions-help">
+        <div class="dimensions-help-title">📏 Paano sukatin ang kwarto?</div>
+        <ol class="dimensions-help-list">
+          <li><strong>Length</strong> — Sukatin mula isang dingding hanggang sa kabilang dingding (habang ng kwarto).</li>
+          <li><strong>Width</strong> — Sukatin mula sa isang dulo hanggang sa kabila (lapad ng kwarto).</li>
+          <li>Both dimensions in <strong>meters</strong>. (1 meter ≈ 3.28 ft)</li>
+        </ol>
+        <button type="button" class="help-link" onclick="openHelp('help-measurement')" style="margin-top:8px">
+          <span class="help-link-icon">?</span>
+          See diagram &amp; full measurement guide
+        </button>
+      </div>
+
       <div class="row3" style="align-items:end; margin-bottom:14px">
         <div class="field"><label>Length (meters)</label><input type="number" id="length" value="0" min="0" step="0.1" oninput="calc()"></div>
         <div class="field"><label>Width (meters)</label><input type="number" id="width" value="0" min="0" step="0.1" oninput="calc()"></div>
@@ -390,59 +665,13 @@
         <span id="sc_basebtu" class="step-result">0 BTU</span>
       </div>
 
-      <div class="row2" style="margin-bottom:4px">
-        <div class="field">
-          <label>Direct Sunlight</label>
-          <div class="toggle-group" id="sunGroup">
-            <button onclick="setToggle('sunGroup',this,'Yes');calc()">Yes <span style="font-size:.75rem;opacity:.7">(+15%)</span></button>
-            <button class="active" onclick="setToggle('sunGroup',this,'No');calc()">No</button>
-          </div>
-        </div>
-        <div class="field">
-          <label>High Ceiling Excess <span style="font-weight:400;color:var(--grey)">(meters above 2.9m)</span></label>
-          <input type="number" id="ceilExcess" value="0" min="0" step="0.5" oninput="calc()">
-        </div>
-      </div>
-      <p style="font-size:.78rem;color:var(--grey);margin-bottom:14px;margin-top:4px">High ceiling adds 7% per meter excess</p>
-
-      <div class="row2" style="margin-bottom:14px">
-        <div class="field">
-          <label>Room Orientation</label>
-          <select id="orientation" onchange="calc()">
-            <option value="North">North</option>
-            <option value="South">South</option>
-            <option value="East">East (+7%)</option>
-            <option value="West">West (+12%)</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Glass / Window Type</label>
-          <select id="glassType" onchange="calc()">
-            <option value="None">None</option>
-            <option value="Clear">Clear (+10%)</option>
-            <option value="Tinted">Tinted (+5%)</option>
-            <option value="Curtains">Curtains (−5%)</option>
-            <option value="Blinds">Blinds (−3%)</option>
-          </select>
-        </div>
-      </div>
-      <div class="row2">
-        <div class="field">
-          <label>Wall Type</label>
-          <select id="wallType" onchange="calc()">
-            <option value="Concrete">Concrete</option>
-            <option value="Wood">Wood (+5%)</option>
-            <option value="Glass">Glass (+15%)</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Floor Level</label>
-          <select id="floorLevel" onchange="calc()">
-            <option value="Ground">Ground</option>
-            <option value="Middle">Middle</option>
-            <option value="Top">Top (+10%)</option>
-          </select>
-        </div>
+      <div class="field" style="margin-top:14px">
+        <label>Ceiling Excess Height <span style="font-weight:400;color:var(--grey)">(meters above 2.9m)</span></label>
+        <input type="number" id="ceilExcess" value="0" min="0" step="0.5" oninput="calc()">
+        <p style="font-size:.78rem;color:var(--grey);margin-top:6px;line-height:1.45">
+          <strong>Standard ceiling height: 2.9m.</strong> If your ceiling is higher, enter the excess only.
+          <br>Example: if ceiling is <strong>4m</strong>, enter <strong>1m</strong> (4m − 2.9m ≈ 1m). Adds 7% per meter.
+        </p>
       </div>
 
       <div class="total-row" style="margin-top:14px">
@@ -452,22 +681,28 @@
     </div>
   </div>
 
-  <!-- INTERNAL HEAT LOAD -->
+  <!-- INTERNAL HEAT LOAD (collapsible, optional) -->
   <div class="card">
-    <div class="card-head">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 6v6l4 2"/></svg>
-      Internal Heat Load
-    </div>
-    <div class="card-body" style="padding:0">
-      <table class="hl-table">
-        <thead><tr><th>Item</th><th>BTU/unit</th><th>Qty</th><th>Total BTU</th></tr></thead>
-        <tbody id="hlBody"></tbody>
-      </table>
-      <div style="padding:16px">
-        <div class="total-row">
-          <span>Total Heatload BTU</span>
-          <span class="val" id="totalHeatBtu">0</span>
-        </div>
+    <button class="card-head collapsible" id="hlToggle" onclick="toggleHeatLoad()" aria-expanded="false">
+      <div style="display:flex;align-items:center;gap:10px;flex:1">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 6v6l4 2"/></svg>
+        <span>Internal Heat Load <span class="optional-tag">Optional</span></span>
+      </div>
+      <svg class="chevron" id="hlChevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+    </button>
+    <div class="card-body collapsible-body" id="hlBody" style="display:none">
+      <p style="color:var(--grey);font-size:.82rem;margin-bottom:12px;line-height:1.5">
+        For more accurate results, you can optionally add heat-generating items in the room (people, appliances, electronics). Leave empty if unsure.
+      </p>
+      <div style="overflow-x:auto">
+        <table class="hl-table">
+          <thead><tr><th>Item</th><th>BTU/unit</th><th>Qty</th><th>Total BTU</th></tr></thead>
+          <tbody id="hlTableBody"></tbody>
+        </table>
+      </div>
+      <div class="total-row" style="margin-top:14px">
+        <span>Total Heatload BTU</span>
+        <span class="val" id="totalHeatBtu">0</span>
       </div>
     </div>
   </div>
@@ -523,39 +758,98 @@
   <div class="result-card" id="resultCard">
     <div class="result-label">Recommended Aircon Capacity</div>
     <div>
-      <span class="result-hp" id="resultHP">0.00</span><span class="result-unit">HP</span>
+      <span class="result-hp" id="resultHP">0.00</span><span class="result-unit" id="resultUnit">HP</span>
     </div>
     <div class="result-sub" id="resultGuide">Enter room measurements to see recommendation</div>
     <div class="result-btu">
       <div class="btu-chip" id="chip_cool">Cooling: 0 BTU</div>
-      <div class="btu-chip" id="chip_heat">Heatload: 0 BTU</div>
+      <div class="btu-chip" id="chip_heat" style="display:none">Heatload: 0 BTU</div>
       <div class="btu-chip" id="chip_total">Total: 0 BTU</div>
     </div>
 
     <!-- VERDICT -->
     <div class="verdict-box" id="verdictBox" style="display:none">
       <div class="verdict-label">AirconKing Verdict</div>
+      <p>💡 <strong>Recommended:</strong> <span id="verdictRec"></span></p>
       <p>📝 <strong>Reason:</strong> <span id="verdictReason"></span></p>
-      <div class="verdict-options" id="verdictOptions"></div>
-      <p class="risk">⚠️ <span id="verdictRisk"></span></p>
+      <p class="risk">⚠️ Risk if lower HP: <span id="verdictRisk"></span></p>
+
+      <!-- HP OPTIONS WITH PRICE RANGE (clickable) -->
+      <div class="hp-options" id="hpOptions">
+        <div class="hp-options-label" id="hpOptionsLabel">🏷️ Unit Price Range Per Capacity</div>
+        <div class="hp-options-sub" id="hpOptionsSub">Tap to select &amp; see electricity cost below.</div>
+        <div class="hp-option-list" id="hpOptionList"></div>
+
+        <!-- FREE INSTALLATION HIGHLIGHT -->
+        <div class="free-install-badge">
+          <span class="fi-icon">✓</span>
+          <div class="fi-text">
+            <div class="fi-title">FREE INSTALLATION</div>
+            <div class="fi-sub">Included with every unit</div>
+          </div>
+        </div>
+
+        <p class="hp-options-note">💡 Actual aircon prices may vary depending on brand and model.</p>
+      </div>
     </div>
 
-    <!-- ESTIMATED MONTHLY ELECTRIC COST -->
+    <!-- ESTIMATED ELECTRIC COST -->
     <div class="energy-box">
-      <div class="energy-label">💰 Estimated Monthly Electric Cost</div>
-      <div class="energy-amount">~₱<span id="rangeTipid2">0</span> – ₱<span id="rangeHeavy2">0</span><span> /month</span></div>
-      <div style="color:rgba(255,255,255,.55);font-size:.78rem;margin-top:8px;text-align:left">
-        📊 Based on:<br>
-        <span style="margin-left:16px">• <span id="hpLabel">1.0</span> HP Inverter Aircon</span><br>
-        <span style="margin-left:16px">• <span id="energyHoursLabel">8</span> hours usage per day</span><br>
-        <span style="margin-left:16px">• ₱<span id="rateLabel">13</span>/kWh Meralco rate</span>
+      <div class="energy-label">💰 Estimated Electric Cost</div>
+
+      <!-- HP Selector Dropdown (single unit mode) -->
+      <div class="hp-selector-wrap" id="hpSelectorWrap">
+        <label class="hp-selector-label">Aircon Capacity</label>
+        <select id="hpSelect" class="hp-selector" onchange="onHpSelectChange()">
+          <option value="0.5">0.5 HP</option>
+          <option value="0.75">0.75 HP</option>
+          <option value="1.0" selected>1.0 HP</option>
+          <option value="1.5">1.5 HP</option>
+          <option value="2.0">2.0 HP</option>
+          <option value="2.5">2.5 HP</option>
+          <option value="3.0">3.0 HP</option>
+        </select>
+      </div>
+
+      <!-- Multi-unit selection label (shown only in multi-unit mode) -->
+      <div id="multiConfigLabel" class="multi-config-label" style="display:none"></div>
+
+      <!-- Cost Per Usage (first per Ward's request) -->
+      <div class="energy-label" style="margin-top:16px">⚡ Estimated Cost Per Usage</div>
+      <table class="cost-usage-table">
+        <tr>
+          <td class="label">Per hour</td>
+          <td class="value" id="costPerHour">—</td>
+        </tr>
+        <tr>
+          <td class="label"><span id="hoursPerNight">8</span> hours (overnight)</td>
+          <td class="value" id="costPerNight">—</td>
+        </tr>
+      </table>
+
+      <!-- Divider -->
+      <div style="height:1px;background:rgba(255,255,255,.15);margin:16px 0"></div>
+
+      <!-- Monthly electric cost (big number, smaller peso sign) -->
+      <div class="energy-label">📅 Estimated Monthly Cost</div>
+      <div class="monthly-cost">
+        <span class="peso">₱</span><span class="amt-min" id="rangeTipid2">0</span>
+        <span class="dash">–</span>
+        <span class="peso">₱</span><span class="amt-max" id="rangeHeavy2">0</span>
+        <span class="suffix">/month</span>
+      </div>
+      <div class="monthly-based-on">
+        📊 Based on:
+        <span>• <span id="hpLabel">1.0</span> HP Inverter Aircon</span>
+        <span>• <span id="energyHoursLabel">8</span> hours/day usage</span>
+        <span>• ₱<span id="rateLabel">13</span>/kWh Meralco rate</span>
       </div>
 
       <!-- Usage hours slider -->
       <div style="margin-top:14px">
-        <div style="display:flex;justify-content:space-between;color:rgba(255,255,255,.5);font-size:.72rem;margin-bottom:2px">
+        <div class="slider-head">
           <span>Usage hours/day</span>
-          <span style="color:rgba(255,255,255,.85);font-weight:700" id="energyHoursCurrent">8 hrs/day</span>
+          <span class="current" id="energyHoursCurrent">8 hrs/day</span>
         </div>
         <input type="range" class="energy-slider" id="usageHours" min="4" max="24" value="8" oninput="calc()">
         <div class="energy-range"><span>4 hrs</span><span>24 hrs</span></div>
@@ -563,9 +857,9 @@
 
       <!-- Meralco rate slider -->
       <div style="margin-top:10px">
-        <div style="display:flex;justify-content:space-between;color:rgba(255,255,255,.5);font-size:.72rem;margin-bottom:2px">
+        <div class="slider-head">
           <span>Meralco rate (₱/kWh)</span>
-          <span style="color:rgba(255,255,255,.85);font-weight:700" id="rateCurrentLabel">₱13.00/kWh</span>
+          <span class="current" id="rateCurrentLabel">₱13.00/kWh</span>
         </div>
         <input type="range" class="energy-slider" id="meralcoRate" min="8" max="18" value="13" step="0.5" oninput="calc()">
         <div class="energy-range"><span>₱8</span><span>₱18</span></div>
@@ -574,46 +868,10 @@
       <!-- Divider -->
       <div style="height:1px;background:rgba(255,255,255,.15);margin:14px 0"></div>
 
-      <!-- Cost per usage -->
-      <div class="energy-label" style="margin-bottom:8px">⚡ Estimated Cost Per Usage</div>
-      <table style="width:100%;border-collapse:collapse;font-size:.82rem;color:white">
-        <tr style="border-bottom:1px solid rgba(255,255,255,.12)">
-          <td style="padding:6px 0;color:rgba(255,255,255,.65)">Per hour</td>
-          <td style="padding:6px 0;text-align:right;font-weight:700" id="costPerHour">—</td>
-        </tr>
-        <tr>
-          <td style="padding:6px 0;color:rgba(255,255,255,.65)"><span id="hoursPerNight">8</span> hours (overnight)</td>
-          <td style="padding:6px 0;text-align:right;font-weight:700" id="costPerNight">—</td>
-        </tr>
-      </table>
-
-      <!-- Divider -->
-      <div style="height:1px;background:rgba(255,255,255,.15);margin:12px 0"></div>
-
       <!-- Note -->
-      <div style="color:rgba(255,255,255,.55);font-size:.75rem;line-height:1.5;text-align:left">
-        📝 <strong style="color:rgba(255,255,255,.75)">NOTE:</strong> Estimated cost only. Computation is based on ₱<span id="rateNote">13</span>/kWh rate, night-time usage, properly sized unit, and closed room (hindi bukas-sara ang pinto/bintana). Actual cost may vary depending on room condition, heat load, and usage habits.
+      <div class="energy-disclaimer">
+        📝 <strong>NOTE:</strong> Estimated cost only. Computation is based on ₱<span id="rateNote">13</span>/kWh rate, night-time usage, properly sized unit, and closed room (hindi bukas-sara ang pinto/bintana). Actual cost may vary depending on room condition and usage habits.
       </div>
-
-      <!-- Divider -->
-      <div style="height:1px;background:rgba(255,255,255,.15);margin:12px 0"></div>
-
-      <!-- Inverter tip -->
-      <div style="color:rgba(255,255,255,.7);font-size:.78rem;text-align:left;line-height:1.5">
-        💡 <strong>Mas tipid ang inverter</strong> kapag tuloy-tuloy ang gamit dahil nagla-low power mode na lang once malamig na ang room.
-      </div>
-    </div>
-
-    <!-- CONFIDENCE SCORE -->
-    <div class="confidence-box">
-      <div class="confidence-header">
-        <span style="font-weight:600;text-transform:uppercase;letter-spacing:.1em">Confidence Score</span>
-        <span class="score" id="confScore">55%</span>
-      </div>
-      <div class="confidence-track">
-        <div class="confidence-fill" id="confFill" style="width:55%;background:#f97316"></div>
-      </div>
-      <div class="confidence-label" id="confLabel">Moderate — fill more fields for higher accuracy</div>
     </div>
   </div>
 
@@ -670,7 +928,7 @@
 </div>
 
 <!-- HELP BUTTON -->
-<button class="help-btn" onclick="document.getElementById('helpModal').classList.add('open')" aria-label="How to use">?</button>
+<button class="help-btn" onclick="openHelp()" aria-label="How to use">?</button>
 
 <!-- HELP MODAL -->
 <div class="modal-overlay" id="helpModal" onclick="if(event.target===this)this.classList.remove('open')">
@@ -680,30 +938,112 @@
       <button class="modal-close" onclick="document.getElementById('helpModal').classList.remove('open')">&times;</button>
     </div>
     <div class="modal-body">
+      <div style="background:var(--blue-pale);border-left:4px solid var(--blue-mid);padding:14px 16px;border-radius:0 10px 10px 0;margin-bottom:16px">
+        <p style="color:var(--blue-dark);font-weight:700;font-size:.92rem;margin-bottom:4px">📏 Una, ready your measuring tape!</p>
+        <p style="color:var(--blue-dark);font-size:.84rem;line-height:1.5">
+          <strong>BTU</strong> = tamang lakas ng aircon para sa size ng kwarto mo. Kailangan natin ng tamang sukat para maayos ang computation.
+        </p>
+      </div>
+
       <h3>1. Client Information</h3>
       <p>Fill in the client's name, contact number, address, and survey date. Select the property type and area where the aircon will be installed.</p>
 
-      <h3>2. Room Measurement</h3>
+      <h3 id="help-measurement">2. Paano sukatin ang kwarto?</h3>
+
+      <!-- Room measurement diagram -->
+      <div class="room-diagram-wrap">
+        <svg class="room-diagram" viewBox="0 0 350 245" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Room measurement diagram">
+          <defs>
+            <pattern id="floorTile" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+              <rect width="20" height="20" fill="#EBF4FB"/>
+              <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#C8DFF0" stroke-width="1"/>
+            </pattern>
+            <marker id="arrHead" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+              <path d="M0,0 L10,5 L0,10 z" fill="#0B5394"/>
+            </marker>
+            <marker id="arrTail" markerWidth="10" markerHeight="10" refX="2" refY="5" orient="auto">
+              <path d="M10,0 L0,5 L10,10 z" fill="#0B5394"/>
+            </marker>
+          </defs>
+
+          <!-- Room floor (rectangle, top-down view) -->
+          <rect x="60" y="60" width="220" height="130" rx="4"
+                fill="url(#floorTile)" stroke="#0B5394" stroke-width="3"/>
+
+          <!-- Door on bottom wall -->
+          <path d="M 160 190 L 160 215 A 25 25 0 0 0 185 190"
+                fill="none" stroke="#0B5394" stroke-width="2" stroke-dasharray="3,3"/>
+          <rect x="158" y="188" width="2" height="6" fill="#0B5394"/>
+          <rect x="183" y="188" width="2" height="6" fill="#0B5394"/>
+
+          <!-- Window indicator on top wall -->
+          <rect x="140" y="56" width="60" height="8" fill="#BAE6FD" stroke="#0369A1" stroke-width="1.5"/>
+          <line x1="170" y1="56" x2="170" y2="64" stroke="#0369A1" stroke-width="1"/>
+
+          <!-- LENGTH arrow (horizontal, above room) — split into two segments around the label -->
+          <line x1="60" y1="35" x2="140" y2="35"
+                stroke="#0B5394" stroke-width="2.5"
+                marker-start="url(#arrTail)"/>
+          <line x1="200" y1="35" x2="280" y2="35"
+                stroke="#0B5394" stroke-width="2.5"
+                marker-end="url(#arrHead)"/>
+          <line x1="60" y1="23" x2="60" y2="47" stroke="#0B5394" stroke-width="2"/>
+          <line x1="280" y1="23" x2="280" y2="47" stroke="#0B5394" stroke-width="2"/>
+          <rect x="140" y="22" width="60" height="26" rx="5" fill="white" stroke="#0B5394" stroke-width="1.5"/>
+          <text x="170" y="40" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" font-size="13" font-weight="800" fill="#0B5394">LENGTH</text>
+
+          <!-- WIDTH arrow (vertical, right of room) — split into two segments around the label -->
+          <line x1="310" y1="60" x2="310" y2="110"
+                stroke="#0B5394" stroke-width="2.5"
+                marker-start="url(#arrTail)"/>
+          <line x1="310" y1="140" x2="310" y2="190"
+                stroke="#0B5394" stroke-width="2.5"
+                marker-end="url(#arrHead)"/>
+          <line x1="298" y1="60" x2="322" y2="60" stroke="#0B5394" stroke-width="2"/>
+          <line x1="298" y1="190" x2="322" y2="190" stroke="#0B5394" stroke-width="2"/>
+          <rect x="284" y="112" width="52" height="26" rx="5" fill="white" stroke="#0B5394" stroke-width="1.5"/>
+          <text x="310" y="130" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" font-size="13" font-weight="800" fill="#0B5394">WIDTH</text>
+
+          <!-- Room label inside -->
+          <text x="170" y="120" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" font-size="13" font-weight="700" fill="#0369A1" opacity=".75">YOUR ROOM</text>
+          <text x="170" y="140" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" font-size="10" font-weight="500" fill="#64748B" opacity=".8">(top-down view)</text>
+
+          <!-- Door label -->
+          <text x="172" y="228" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" font-size="9" font-weight="600" fill="#64748B">door</text>
+        </svg>
+        <div class="diagram-caption">
+          📐 Top-down view. Measure the two sides of the room — <strong>length</strong> (habang) and <strong>width</strong> (lapad).
+        </div>
+      </div>
+
       <ol>
-        <li>Enter the room's <strong>length</strong> and <strong>width</strong> in meters. The floor area calculates automatically.</li>
-        <li>Toggle <strong>Direct Sunlight</strong> to "Yes" if the room gets direct sun exposure (adds 15%).</li>
-        <li>If the ceiling is higher than the standard 2.9m, enter the <strong>excess meters</strong> (adds 7% per meter).</li>
+        <li><strong>Length</strong> — Sukatin mula isang dingding hanggang sa kabilang dingding (habang ng kwarto).</li>
+        <li><strong>Width</strong> — Sukatin mula sa isang dulo hanggang sa kabila (lapad ng kwarto).</li>
+        <li>Enter both in <strong>meters</strong>. Floor area computes automatically. (1 meter ≈ 3.28 ft)</li>
       </ol>
+      <div class="tip" style="margin-top:10px">
+        <strong>💡 Tip:</strong> If you only have a tape measure in feet, divide by 3.28 to convert to meters. Example: 13 ft ÷ 3.28 ≈ 4m.
+      </div>
 
-      <h3>3. Internal Heat Load</h3>
-      <p>Enter the <strong>quantity</strong> of each heat-producing item in the room (people, appliances, lights, etc.). Each item has a fixed BTU value that gets added to the total.</p>
+      <h3>3. Ceiling Height</h3>
+      <p><strong>Standard ceiling height is 2.9m.</strong> If your ceiling is taller, enter only the excess.</p>
+      <p>Example: if your ceiling is <strong>4 meters</strong>, enter <strong>1 meter</strong> (4 − 2.9 ≈ 1.1). Adds 7% per meter.</p>
 
-      <h3>4. Environmental Factors</h3>
+      <h3>4. Internal Heat Load <em style="font-weight:400;color:var(--grey)">(Optional)</em></h3>
+      <p>For more accurate results, tap the <strong>Internal Heat Load</strong> card to expand it, then enter the quantity of heat-generating items (people, appliances, etc.). Skip this if you're unsure.</p>
+
+      <h3>5. Environmental Factors</h3>
       <ol>
         <li><strong>Low Clearance</strong> &mdash; Toggle "Yes" if the gap between ceiling and roof is less than 1 meter (adds 15%).</li>
         <li><strong>No Roof Insulation</strong> &mdash; Toggle "Yes" if the roof has no insulation (adds 20%).</li>
       </ol>
 
-      <h3>5. Result</h3>
-      <p>The recommended HP is calculated as: <strong>Total BTU &divide; 9,000</strong>. Use this as a guide to recommend the right aircon unit to the client.</p>
+      <h3>6. Result & Price Options</h3>
+      <p>The recommended HP is calculated as: <strong>Total BTU &divide; 9,000</strong>.</p>
+      <p>Tap any HP option card (Downsize / Recommended / Upsize) to see the price range and estimated monthly electricity cost for that capacity.</p>
 
       <div class="tip">
-        <strong>Tip:</strong> Use the "Print / Save PDF" button to generate a professional summary you can share with the client.
+        <strong>Tip:</strong> Use "Copy Details" to send a complete summary to AirconKing via Messenger.
       </div>
     </div>
   </div>
@@ -713,7 +1053,7 @@
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
 <script>
-// ── Heat load items ──────────────────────────────────────────────────────
+// ── Heat load items (optional) ───────────────────────────────────────────
 const ITEMS = [
   { name: 'People',                     btu: 550  },
   { name: 'Windows',                    btu: 600  },
@@ -728,58 +1068,107 @@ const ITEMS = [
   { name: 'Oven / Rice Cooker',         btu: 200  },
 ];
 
-// ── Adjustment maps ──────────────────────────────────────────────────────
-const ORIENT_ADJ = { North: 0, South: 0, East: 0.07, West: 0.12 };
-const GLASS_ADJ  = { None: 0, Clear: 0.10, Tinted: 0.05, Curtains: -0.05, Blinds: -0.03 };
-const WALL_ADJ   = { Concrete: 0, Wood: 0.05, Glass: 0.15 };
-const FLOOR_ADJ  = { Ground: 0, Middle: 0, Top: 0.10 };
+// Build heat load table rows
+(function buildHeatTable() {
+  const tbody = document.getElementById('hlTableBody');
+  if (!tbody) return;
+  ITEMS.forEach((item, i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${item.name}</td>
+      <td>${item.btu.toLocaleString()}</td>
+      <td><input class="qty-input" type="number" id="qty_${i}" value="0" min="0" oninput="calc()"></td>
+      <td id="hlTotal_${i}">\u2014</td>
+    `;
+    tbody.appendChild(tr);
+  });
+})();
 
-// ── Standard HP brackets ─────────────────────────────────────────────────
+// Open help modal (optionally scrolling to a section)
+function openHelp(sectionId) {
+  const modal = document.getElementById('helpModal');
+  modal.classList.add('open');
+  if (sectionId) {
+    // Small delay so the modal is fully rendered before scrolling
+    setTimeout(() => {
+      const target = document.getElementById(sectionId);
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 80);
+  }
+}
+
+// Toggle collapsible heat load card
+function toggleHeatLoad() {
+  const btn  = document.getElementById('hlToggle');
+  const body = document.getElementById('hlBody');
+  const open = btn.getAttribute('aria-expanded') === 'true';
+  if (open) {
+    btn.setAttribute('aria-expanded', 'false');
+    body.style.display = 'none';
+  } else {
+    btn.setAttribute('aria-expanded', 'true');
+    body.style.display = 'block';
+  }
+}
+
+// ── AirconKing price ranges per HP (from Ward's pricelist) ──────────────
+const AK_PRICES = {
+  0.5:  { min: 0,     max: 0     },
+  0.75: { min: 0,     max: 0     },
+  1.0:  { min: 18999, max: 33500 },
+  1.5:  { min: 21999, max: 35999 },
+  2.0:  { min: 24499, max: 47999 },
+  2.5:  { min: 32499, max: 54999 },
+  3.0:  { min: 43999, max: 54999 },
+};
+
+// ── Standard HP brackets (single-unit splits max out at 3.0 HP) ─────────
 const HP_BRACKETS = [0.5, 0.75, 1.0, 1.5, 2.0, 2.5, 3.0];
-const MAX_SINGLE_HP = 3.0;
+const MAX_UNIT_HP = 3.0;
 
+// Snap raw HP into a standard bracket, capped at MAX_UNIT_HP.
+// Returns the single-unit HP and whether multi-unit is needed.
 function snapHp(raw) {
-  for (const b of HP_BRACKETS) { if (raw <= b * 1.15) return b; }
-  return MAX_SINGLE_HP; // cap at max real unit size
+  if (raw <= 0) return { hp: 0, multi: false };
+  // If even the largest bracket can't cover it (+15% tolerance) → multi-unit
+  if (raw > MAX_UNIT_HP * 1.15) {
+    return { hp: MAX_UNIT_HP, multi: true, rawHp: raw };
+  }
+  for (const b of HP_BRACKETS) { if (raw <= b * 1.15) return { hp: b, multi: false }; }
+  return { hp: MAX_UNIT_HP, multi: false };
 }
 
-// Generate all valid unit combos for a given raw HP, sorted by total HP ascending
-function generateOptions(rawHp) {
-  if (rawHp <= MAX_SINGLE_HP * 1.15) {
-    const hp = snapHp(rawHp);
-    const result = [{ hp, units: 1, totalHp: hp }];
-    // Add nearby bracket sizes as alternatives
-    const idx = HP_BRACKETS.indexOf(hp);
-    if (idx > 0) result.push({ hp: HP_BRACKETS[idx - 1], units: 1, totalHp: HP_BRACKETS[idx - 1] });
-    if (idx < HP_BRACKETS.length - 1) result.push({ hp: HP_BRACKETS[idx + 1], units: 1, totalHp: HP_BRACKETS[idx + 1] });
-    // For best fit first, then lower, then higher
-    return result.slice(0, 3);
+// Build up to 2 multi-unit configurations for a given raw HP load.
+// Example: rawHp=6.0 → [{hp:3.0, count:2}, {hp:2.0, count:3}]
+function buildMultiConfigs(rawHp) {
+  const configs = [];
+
+  // Option A: fewest 3.0 HP units (min 2)
+  const countA = Math.max(2, Math.ceil(rawHp / 3.0));
+  configs.push({ hp: 3.0, count: countA, totalHp: countA * 3.0 });
+
+  // Option B: 2.0 HP units (smaller, more flexible zoning)
+  const countB = Math.max(2, Math.ceil(rawHp / 2.0));
+  if (countB !== countA) {
+    configs.push({ hp: 2.0, count: countB, totalHp: countB * 2.0 });
   }
-  const opts = [];
-  const seen = new Set();
-  // For multi-unit, only consider 2.0 HP and above to keep unit count practical
-  const minSize = rawHp > 6 ? 2.0 : 1.5;
-  for (const size of [...HP_BRACKETS].reverse()) {
-    if (size < minSize) continue;
-    const count = Math.ceil(rawHp / size);
-    const total = count * size;
-    const key = count + 'x' + size;
-    if (total >= rawHp && total <= rawHp * 1.30 && !seen.has(key)) {
-      seen.add(key);
-      opts.push({ hp: size, units: count, totalHp: total });
-    }
+
+  // If we only got 1 unique option, add a 1.5 HP alternative
+  if (configs.length < 2) {
+    const count15 = Math.max(3, Math.ceil(rawHp / 1.5));
+    configs.push({ hp: 1.5, count: count15, totalHp: count15 * 1.5 });
   }
-  if (opts.length === 0) {
-    const count = Math.ceil(rawHp / MAX_SINGLE_HP);
-    opts.push({ hp: MAX_SINGLE_HP, units: count, totalHp: count * MAX_SINGLE_HP });
-  }
-  // Sort by totalHp ascending, then fewer units preferred
-  opts.sort((a, b) => a.totalHp - b.totalHp || a.units - b.units);
-  return opts.slice(0, 3);
+
+  return configs.slice(0, 2);
 }
 
-// ── State for toggles ────────────────────────────────────────────────────
-const state = { typeGroup:'Residential', sunGroup:'No', lcGroup:'No', riGroup:'No' };
+// ── State for toggles + selected config ─────────────────────────────────
+const state = { typeGroup:'Residential', lcGroup:'No', riGroup:'No' };
+let selectedHp    = 1.0;   // HP per unit
+let selectedCount = 1;     // number of units (>=2 means multi)
+let recommendedHp = 0;     // single-unit recommended HP (capped at 3.0)
+let isMultiUnit   = false; // true when rawHp > MAX_UNIT_HP * 1.15
+let multiConfigs  = [];    // current multi-unit options for rendering
 
 function setToggle(groupId, btn, val) {
   state[groupId] = val;
@@ -789,21 +1178,172 @@ function setToggle(groupId, btn, val) {
   calc();
 }
 
-// ── Build heat load table ────────────────────────────────────────────────
-const tbody = document.getElementById('hlBody');
-ITEMS.forEach((item, i) => {
-  const tr = document.createElement('tr');
-  tr.innerHTML = `
-    <td>${item.name}</td>
-    <td>${item.btu.toLocaleString()}</td>
-    <td><input class="qty-input" type="number" id="qty_${i}" value="0" min="0" oninput="calc()"></td>
-    <td id="hlTotal_${i}">0</td>
-  `;
-  tbody.appendChild(tr);
-});
-
 // ── Formatter ────────────────────────────────────────────────────────────
 const fmt = n => Math.round(n).toLocaleString();
+
+// ── Render HP options (single-unit mode OR multi-unit mode) ─────────────
+function renderHpOptions(recHp) {
+  const list = document.getElementById('hpOptionList');
+  const label = document.getElementById('hpOptionsLabel');
+  const sub = document.getElementById('hpOptionsSub');
+  list.innerHTML = '';
+
+  if (isMultiUnit) {
+    // ── Multi-unit mode: show 2 configuration options ────────────────
+    label.textContent = '🏷️ Recommended Setups';
+    sub.innerHTML = 'Multiple units needed for this room size. Tap to select &amp; see costs below.';
+
+    multiConfigs.forEach((cfg, i) => {
+      const prices = AK_PRICES[cfg.hp] || { min: 0, max: 0 };
+      const totalMin = prices.min * cfg.count;
+      const totalMax = prices.max * cfg.count;
+      const isSel = (cfg.hp === selectedHp && cfg.count === selectedCount);
+
+      const div = document.createElement('div');
+      div.className = 'hp-option' + (isSel ? ' selected' : '');
+      div.setAttribute('data-hp', cfg.hp);
+      div.setAttribute('data-count', cfg.count);
+
+      const optLetter = String.fromCharCode(65 + i); // A, B
+      const badgeClass = i === 0 ? 'hp-option-badge' : 'hp-option-badge alt-badge';
+
+      div.innerHTML = `
+        <div class="hp-option-label">
+          <span class="hp-option-hp">${cfg.count} × ${cfg.hp.toFixed(1)} HP</span>
+          <span class="${badgeClass}">OPTION ${optLetter}</span>
+        </div>
+        <div class="hp-option-right">
+          <div class="hp-option-price">₱${totalMin.toLocaleString()} – ₱${totalMax.toLocaleString()}</div>
+          <div class="hp-option-elec">Total for ${cfg.count} units</div>
+        </div>
+      `;
+      div.addEventListener('click', () => selectConfig(cfg.hp, cfg.count));
+      list.appendChild(div);
+    });
+  } else {
+    // ── Single-unit mode: show 3 HP option cards ─────────────────────
+    label.textContent = '🏷️ Unit Price Range Per Capacity';
+    sub.innerHTML = 'Tap to select &amp; see electricity cost below.';
+
+    // Find recommended index in brackets
+    let idx = HP_BRACKETS.indexOf(recHp);
+    if (idx === -1) {
+      idx = 0;
+      let minDiff = Infinity;
+      for (let i = 0; i < HP_BRACKETS.length; i++) {
+        const d = Math.abs(HP_BRACKETS[i] - recHp);
+        if (d < minDiff) { minDiff = d; idx = i; }
+      }
+    }
+
+    // Pick 3: one below, recommended, one above (clamped)
+    let lo = idx - 1;
+    let hi = idx + 1;
+    if (lo < 0) { lo = 0; hi = Math.min(2, HP_BRACKETS.length - 1); }
+    if (hi > HP_BRACKETS.length - 1) { hi = HP_BRACKETS.length - 1; lo = Math.max(0, hi - 2); }
+    const options = HP_BRACKETS.slice(lo, hi + 1);
+
+    options.forEach(optHp => {
+      const isRec = optHp === recHp;
+      const isSel = (optHp === selectedHp && selectedCount === 1);
+      const prices = AK_PRICES[optHp] || { min: 0, max: 0 };
+
+      const priceHtml = prices.min > 0
+        ? `<div class="hp-option-price">₱${prices.min.toLocaleString()} – ₱${prices.max.toLocaleString()}</div>`
+        : `<div class="hp-option-nopricing">Contact AirconKing for pricing</div>`;
+
+      const badgeHtml = isRec
+        ? '<span class="hp-option-badge">RECOMMENDED</span>'
+        : (optHp < recHp
+            ? '<span class="hp-option-badge" style="background:rgba(255,255,255,.2)">Downsize</span>'
+            : '<span class="hp-option-badge" style="background:rgba(255,255,255,.2)">Upsize</span>');
+
+      const div = document.createElement('div');
+      div.className = 'hp-option' + (isSel ? ' selected' : '');
+      div.setAttribute('data-hp', optHp);
+      div.innerHTML = `
+        <div class="hp-option-label">
+          <span class="hp-option-hp">${optHp.toFixed(1)} HP</span>
+          ${badgeHtml}
+        </div>
+        <div class="hp-option-right">${priceHtml}</div>
+      `;
+      div.addEventListener('click', () => selectConfig(optHp, 1));
+      list.appendChild(div);
+    });
+  }
+}
+
+// ── Select a configuration (hp + count) ────────────────────────────────
+function selectConfig(hp, count) {
+  selectedHp = parseFloat(hp);
+  selectedCount = parseInt(count) || 1;
+
+  // Sync dropdown (only reflects single HP in multi mode)
+  const sel = document.getElementById('hpSelect');
+  if (sel && !isMultiUnit) sel.value = selectedHp.toString();
+
+  // Re-render options to reflect selection state
+  if (recommendedHp > 0) renderHpOptions(recommendedHp);
+  updateEnergy();
+}
+
+// Legacy wrapper for dropdown
+function onHpSelectChange() {
+  const sel = document.getElementById('hpSelect');
+  selectConfig(parseFloat(sel.value), 1);
+}
+
+// ── Update energy estimator for selected config ────────────────────────
+function updateEnergy() {
+  const hours = parseInt(document.getElementById('usageHours').value) || 8;
+  const rate  = parseFloat(document.getElementById('meralcoRate').value) || 13;
+  const kwPerUnit = selectedHp * 0.746;
+  const totalKw = kwPerUnit * selectedCount;
+
+  // Tipid (inverter steady ~60%), Heavy (full load 100%)
+  const perHourTipid  = totalKw * rate * 0.60;
+  const perHourHeavy  = totalKw * rate * 1.00;
+  const perNightTipid = perHourTipid * hours;
+  const perNightHeavy = perHourHeavy * hours;
+  const perMonthTipid = perNightTipid * 30;
+  const perMonthHeavy = perNightHeavy * 30;
+
+  const p = n => Math.round(n).toLocaleString();
+
+  document.getElementById('rangeTipid2').textContent = p(perMonthTipid);
+  document.getElementById('rangeHeavy2').textContent = p(perMonthHeavy);
+
+  // HP label reflects config (e.g. "2 × 3.0" or "1.5")
+  const hpLabelText = selectedCount > 1
+    ? `${selectedCount} × ${selectedHp.toFixed(1)}`
+    : selectedHp.toFixed(selectedHp % 1 === 0 ? 1 : 2);
+  document.getElementById('hpLabel').textContent = hpLabelText;
+
+  document.getElementById('energyHoursLabel').textContent = hours;
+  document.getElementById('energyHoursCurrent').textContent = hours + ' hrs/day';
+  document.getElementById('rateLabel').textContent = rate % 1 === 0 ? rate : rate.toFixed(1);
+  document.getElementById('rateCurrentLabel').textContent = '\u20B1' + rate.toFixed(2) + '/kWh';
+  document.getElementById('rateNote').textContent = rate % 1 === 0 ? rate : rate.toFixed(1);
+  document.getElementById('hoursPerNight').textContent = hours;
+
+  document.getElementById('costPerHour').textContent  = '\u20B1' + p(perHourTipid)  + ' \u2013 \u20B1' + p(perHourHeavy);
+  document.getElementById('costPerNight').textContent = '\u20B1' + p(perNightTipid) + ' \u2013 \u20B1' + p(perNightHeavy);
+
+  // Show/hide dropdown based on mode
+  const selWrap = document.getElementById('hpSelectorWrap');
+  const multiLabel = document.getElementById('multiConfigLabel');
+  if (isMultiUnit) {
+    if (selWrap) selWrap.style.display = 'none';
+    if (multiLabel) {
+      multiLabel.style.display = '';
+      multiLabel.textContent = `Selected: ${selectedCount} × ${selectedHp.toFixed(1)} HP Split Type Inverter`;
+    }
+  } else {
+    if (selWrap) selWrap.style.display = '';
+    if (multiLabel) multiLabel.style.display = 'none';
+  }
+}
 
 // ── Main calculation ─────────────────────────────────────────────────────
 function calc() {
@@ -811,44 +1351,36 @@ function calc() {
   const wid  = parseFloat(document.getElementById('width').value)  || 0;
   const ceil = parseFloat(document.getElementById('ceilExcess').value) || 0;
 
-  const orient = document.getElementById('orientation').value;
-  const glass  = document.getElementById('glassType').value;
-  const wall   = document.getElementById('wallType').value;
-  const floor  = document.getElementById('floorLevel').value;
-  const hours  = parseInt(document.getElementById('usageHours').value) || 8;
-  const rate   = parseFloat(document.getElementById('meralcoRate').value) || 13;
-
   const floorArea = len * wid;
   const baseBtu   = floorArea * 600;
 
-  // Cooling adjustments (all % of baseBtu)
-  const sunAdj    = state.sunGroup === 'Yes' ? baseBtu * 0.15 : 0;
-  const ceilAdj   = ceil * 0.07 * baseBtu;
-  const orientAdj = baseBtu * (ORIENT_ADJ[orient] || 0);
-  const glassAdj  = baseBtu * (GLASS_ADJ[glass]   || 0);
-  const wallAdj   = baseBtu * (WALL_ADJ[wall]     || 0);
-  const floorAdj  = baseBtu * (FLOOR_ADJ[floor]   || 0);
-  const coolBtu   = baseBtu + sunAdj + ceilAdj + orientAdj + glassAdj + wallAdj + floorAdj;
+  // Cooling adjustments (just ceiling excess)
+  const ceilAdj = ceil * 0.07 * baseBtu;
+  const coolBtu = baseBtu + ceilAdj;
 
-  // Heat load
+  // Heat load (optional — collapsible card)
   let heatBtu = 0;
   ITEMS.forEach((item, i) => {
-    const qty = parseInt(document.getElementById(`qty_${i}`).value) || 0;
+    const qtyEl = document.getElementById(`qty_${i}`);
+    const qty = qtyEl ? (parseInt(qtyEl.value) || 0) : 0;
     const tot = item.btu * qty;
     heatBtu += tot;
-    document.getElementById(`hlTotal_${i}`).textContent = tot > 0 ? fmt(tot) : '\u2014';
+    const totEl = document.getElementById(`hlTotal_${i}`);
+    if (totEl) totEl.textContent = tot > 0 ? fmt(tot) : '\u2014';
   });
 
   const baseTotal = coolBtu + heatBtu;
+
+  // Environmental factors apply to base total (cooling + heatload)
   const lcAdj = state.lcGroup === 'Yes' ? baseTotal * 0.15 : 0;
   const riAdj = state.riGroup === 'Yes' ? baseTotal * 0.20 : 0;
   const totalBtu = baseTotal + lcAdj + riAdj;
   const rawHp = totalBtu / 9000;
-  const options = generateOptions(rawHp);
-  const rec = options[0]; // best fit (lowest sufficient HP)
-  const hp = rec.totalHp;
-  const unitHp = rec.hp;
-  const unitCount = rec.units;
+  const snapResult = snapHp(rawHp);
+  const hp = snapResult.hp;
+  recommendedHp = hp;
+  isMultiUnit = snapResult.multi;
+  multiConfigs = isMultiUnit ? buildMultiConfigs(rawHp) : [];
 
   // ── Update DOM: base fields ────────────────────────────────────────────
   document.getElementById('floorArea').textContent   = floorArea.toFixed(2) + ' sqm';
@@ -860,21 +1392,46 @@ function calc() {
   document.getElementById('lcVal').textContent        = lcAdj > 0 ? '+' + fmt(lcAdj) + ' BTU' : '+0';
   document.getElementById('riVal').textContent        = riAdj > 0 ? '+' + fmt(riAdj) + ' BTU' : '+0';
   document.getElementById('totalBtu').textContent     = fmt(totalBtu) + ' BTU';
-  document.getElementById('resultHP').textContent     = hp.toFixed(1);
+  // Result HP display — for multi-unit, show "N × HP" format
+  const resultHpEl = document.getElementById('resultHP');
+  const resultUnitEl = document.getElementById('resultUnit');
+  if (hp <= 0) {
+    resultHpEl.textContent = '0.00';
+    resultUnitEl.style.display = '';
+    resultHpEl.style.fontSize = '';
+  } else if (isMultiUnit && multiConfigs.length > 0) {
+    const top = multiConfigs[0];
+    resultHpEl.textContent = `${top.count}×${top.hp.toFixed(1)}`;
+    resultHpEl.style.fontSize = '4rem';
+    resultUnitEl.style.display = '';
+  } else {
+    resultHpEl.textContent = hp.toFixed(2);
+    resultHpEl.style.fontSize = '';
+    resultUnitEl.style.display = '';
+  }
   document.getElementById('chip_cool').textContent    = 'Cooling: ' + fmt(coolBtu) + ' BTU';
-  document.getElementById('chip_heat').textContent    = 'Heatload: ' + fmt(heatBtu) + ' BTU';
+  const heatChip = document.getElementById('chip_heat');
+  if (heatBtu > 0) {
+    heatChip.style.display = '';
+    heatChip.textContent = 'Heatload: ' + fmt(heatBtu) + ' BTU';
+  } else {
+    heatChip.style.display = 'none';
+  }
   document.getElementById('chip_total').textContent   = 'Total: ' + fmt(totalBtu) + ' BTU';
 
   // ── Guide text ─────────────────────────────────────────────────────────
   let guide = '';
-  if (hp <= 0) guide = 'Enter room measurements to see recommendation';
-  else if (unitCount > 1) guide = 'Large area \u2014 ' + unitCount + ' units recommended for proper coverage';
-  else if (unitHp <= 0.75) guide = 'Light cooling needed \u2014 \u00BE HP unit suitable';
-  else if (unitHp <= 1.0)  guide = 'Standard room \u2014 1.0 HP unit recommended';
-  else if (unitHp <= 1.5)  guide = 'Medium load \u2014 1.5 HP unit recommended';
-  else if (unitHp <= 2.0)  guide = 'High load \u2014 2.0 HP unit recommended';
-  else if (unitHp <= 2.5)  guide = 'Heavy load \u2014 2.5 HP unit recommended';
-  else                      guide = 'Heavy load \u2014 3.0 HP unit recommended';
+  if (hp <= 0) {
+    guide = 'Enter room measurements to see recommendation';
+  } else if (isMultiUnit) {
+    const needed = Math.ceil(rawHp * 10) / 10;
+    guide = `Large room — ${needed.toFixed(1)} HP total needed, multi-unit setup recommended`;
+  } else if (hp <= 0.75) guide = 'Light cooling needed \u2014 \u00BE HP unit suitable';
+  else if (hp <= 1.0)  guide = 'Standard room \u2014 1.0 HP unit recommended';
+  else if (hp <= 1.5)  guide = 'Medium load \u2014 1.5 HP unit recommended';
+  else if (hp <= 2.0)  guide = 'High load \u2014 2.0 HP unit recommended';
+  else if (hp <= 2.5)  guide = 'Heavy load \u2014 2.5 HP unit recommended';
+  else                  guide = 'Heavy load \u2014 3.0 HP unit recommended';
   document.getElementById('resultGuide').textContent = guide;
 
   // ── Verdict ────────────────────────────────────────────────────────────
@@ -882,101 +1439,46 @@ function calc() {
   if (hp > 0) {
     verdictBox.style.display = 'block';
     const reasons = [];
-    if (state.sunGroup === 'Yes') reasons.push('direct sunlight');
-    if (orient === 'West')  reasons.push('west-facing (+12%)');
-    if (orient === 'East')  reasons.push('east-facing (+7%)');
-    if (glass === 'Clear')  reasons.push('clear glass windows (+10%)');
-    if (wall === 'Glass')   reasons.push('glass walls (+15%)');
-    if (wall === 'Wood')    reasons.push('wood walls (+5%)');
-    if (floor === 'Top')    reasons.push('top floor (+10%)');
-    if (heatBtu > 2000)     reasons.push('high internal heat load');
+    if (ceil > 0)                 reasons.push('high ceiling (+' + (ceil * 7).toFixed(0) + '%)');
+    if (state.lcGroup === 'Yes')  reasons.push('low clearance (+15%)');
+    if (state.riGroup === 'Yes')  reasons.push('no roof insulation (+20%)');
+    if (heatBtu > 0)              reasons.push('internal heat load');
 
     const area = document.getElementById('area').value;
-    const reasonText = reasons.length > 0 ? reasons.join(', ') : 'standard ' + area.toLowerCase() + ' conditions';
+    const reasonText = reasons.length > 0
+      ? 'Based on room size + ' + reasons.join(' + ')
+      : 'Based on ' + floorArea.toFixed(1) + ' sqm ' + area.toLowerCase();
 
+    // Verdict text adapts to single vs multi unit
+    if (isMultiUnit) {
+      const neededHp = Math.ceil(rawHp * 10) / 10;
+      document.getElementById('verdictRec').textContent =
+        `${neededHp.toFixed(1)} HP total — multi-unit Split Type Inverter setup`;
+      document.getElementById('verdictRisk').textContent =
+        'A single unit cannot cool this room size efficiently. Multiple units also allow zoning and redundancy.';
+    } else {
+      document.getElementById('verdictRec').textContent = hp.toFixed(2) + ' HP Split Type Inverter';
+      document.getElementById('verdictRisk').textContent =
+        'Hindi lalamig ng maayos + mataas ang kuryente kung mas mababa ang HP.';
+    }
     document.getElementById('verdictReason').textContent = reasonText;
 
-    // Build option cards
-    const optContainer = document.getElementById('verdictOptions');
-    const labels = unitCount > 1
-      ? ['Best Fit', 'Alternative', 'Alternative']
-      : ['Recommended', 'Budget', 'Extra Cooling'];
-    optContainer.innerHTML = options.map((opt, i) => {
-      const isRec = i === 0;
-      const desc = opt.units > 1
-        ? opt.units + '\u00D7 ' + opt.hp.toFixed(1) + ' HP Split Type Inverter'
-        : opt.hp.toFixed(1) + ' HP Split Type Inverter';
-      const kwOpt = opt.totalHp * 0.746;
-      const moLow = Math.round(kwOpt * rate * 0.65 * hours * 30);
-      const moHigh = Math.round(kwOpt * rate * 0.85 * hours * 30);
-      const costStr = '\u20B1' + moLow.toLocaleString() + ' \u2013 \u20B1' + moHigh.toLocaleString() + '/mo';
-      return '<div class="verdict-option' + (isRec ? ' recommended' : '') + '">'
-        + '<div><div class="opt-label">' + (isRec ? '\uD83D\uDCA1 ' : '') + labels[i] + '</div>'
-        + '<div class="opt-desc">' + desc + '</div></div>'
-        + '<div class="opt-cost">' + costStr + '</div></div>';
-    }).join('');
+    // Auto-sync selection to recommended on each recalc
+    if (isMultiUnit && multiConfigs.length > 0) {
+      selectedHp = multiConfigs[0].hp;
+      selectedCount = multiConfigs[0].count;
+    } else {
+      selectedHp = hp;
+      selectedCount = 1;
+      document.getElementById('hpSelect').value = hp.toString();
+    }
 
-    document.getElementById('verdictRisk').textContent = unitCount > 1
-      ? 'Malaking area \u2014 kailangan ng multiple units para pantay ang lamig sa buong kwarto.'
-      : 'Hindi lalamig ng maayos + mataas ang kuryente kung mas mababa ang HP.';
+    renderHpOptions(hp);
+    updateEnergy();
   } else {
     verdictBox.style.display = 'none';
+    updateEnergy();
   }
-
-  // ── Energy estimator ───────────────────────────────────────────────────
-  const kw = hp * 0.746;
-
-  // Tipid (inverter steady ~65%), Heavy (peak cooling ~85%)
-  const perHourTipid  = kw * rate * 0.65;
-  const perHourHeavy  = kw * rate * 0.85;
-  const perNightTipid = perHourTipid * hours;
-  const perNightHeavy = perHourHeavy * hours;
-  const perMonthTipid = perNightTipid * 30;
-  const perMonthHeavy = perNightHeavy * 30;
-
-  const p = n => Math.round(n).toLocaleString();
-
-  // Header range
-  document.getElementById('rangeTipid2').textContent = p(perMonthTipid);
-  document.getElementById('rangeHeavy2').textContent = p(perMonthHeavy);
-
-  // Based on details
-  document.getElementById('hpLabel').textContent = hp.toFixed(1);
-  document.getElementById('energyHoursLabel').textContent = hours;
-  document.getElementById('energyHoursCurrent').textContent = hours + ' hrs/day';
-  document.getElementById('rateLabel').textContent = rate % 1 === 0 ? rate : rate.toFixed(1);
-  document.getElementById('rateCurrentLabel').textContent = '\u20B1' + rate.toFixed(2) + '/kWh';
-  document.getElementById('rateNote').textContent = rate % 1 === 0 ? rate : rate.toFixed(1);
-  document.getElementById('hoursPerNight').textContent = hours;
-
-  // Cost per usage
-  document.getElementById('costPerHour').textContent  = '\u20B1' + p(perHourTipid)  + ' \u2013 \u20B1' + p(perHourHeavy);
-  document.getElementById('costPerNight').textContent = '\u20B1' + p(perNightTipid) + ' \u2013 \u20B1' + p(perNightHeavy);
-
-  // ── Confidence score ───────────────────────────────────────────────────
-  let conf = 40;
-  if (len > 0) conf += 5;
-  if (wid > 0) conf += 5;
-  if (document.getElementById('clientName').value) conf += 5;
-  if (document.getElementById('contactNum').value) conf += 5;
-  if (document.getElementById('address').value) conf += 5;
-  if (orient !== 'North') conf += 8;
-  if (glass !== 'None') conf += 8;
-  if (wall !== 'Concrete') conf += 5;
-  if (floor !== 'Ground') conf += 5;
-  if (ceil > 0) conf += 4;
-  if (heatBtu > 0) conf += 5;
-  conf = Math.min(conf, 98);
-
-  let confColor, confText;
-  if (conf >= 85) { confColor = '#22c55e'; confText = 'High confidence \u2014 complete inputs provided'; }
-  else if (conf >= 65) { confColor = '#eab308'; confText = 'Good confidence \u2014 most inputs filled'; }
-  else { confColor = '#f97316'; confText = 'Moderate \u2014 fill more fields for higher accuracy'; }
-
-  document.getElementById('confScore').textContent = conf + '%';
-  document.getElementById('confFill').style.width = conf + '%';
-  document.getElementById('confFill').style.background = confColor;
-  document.getElementById('confLabel').textContent = confText;
 }
 
 // ── Reset ────────────────────────────────────────────────────────────────
@@ -984,23 +1486,29 @@ function resetAll() {
   document.getElementById('clientName').value = '';
   document.getElementById('contactNum').value = '';
   document.getElementById('address').value    = '';
-  document.getElementById('surveyDate').value = '';
+  document.getElementById('surveyDate').valueAsDate = new Date();
   document.getElementById('length').value = '0';
   document.getElementById('width').value  = '0';
   document.getElementById('ceilExcess').value = '0';
   document.getElementById('area').value = 'Bedroom';
-  document.getElementById('orientation').value = 'North';
-  document.getElementById('glassType').value = 'None';
-  document.getElementById('wallType').value = 'Concrete';
-  document.getElementById('floorLevel').value = 'Ground';
   document.getElementById('usageHours').value = '8';
-  ITEMS.forEach((_,i) => { document.getElementById(`qty_${i}`).value = '0'; });
-  ['typeGroup','sunGroup','lcGroup','riGroup'].forEach(id => {
+  document.getElementById('meralcoRate').value = '13';
+  document.getElementById('hpSelect').value = '1.0';
+  selectedHp = 1.0;
+  selectedCount = 1;
+  isMultiUnit = false;
+  multiConfigs = [];
+  // Clear heat load quantities
+  ITEMS.forEach((_, i) => {
+    const q = document.getElementById(`qty_${i}`);
+    if (q) q.value = '0';
+  });
+  ['typeGroup','lcGroup','riGroup'].forEach(id => {
     const grp = document.getElementById(id);
     const btns = grp.querySelectorAll('button');
     btns.forEach((b,i) => { b.classList.toggle('active', i === (id === 'typeGroup' ? 0 : 1)); });
   });
-  state.typeGroup = 'Residential'; state.sunGroup = 'No'; state.lcGroup = 'No'; state.riGroup = 'No';
+  state.typeGroup = 'Residential'; state.lcGroup = 'No'; state.riGroup = 'No';
   calc();
 }
 
@@ -1032,6 +1540,8 @@ function copyDetails() {
   const total  = document.getElementById('totalBtu').textContent;
   const cool   = document.getElementById('totalCoolBtu').textContent;
   const heat   = document.getElementById('totalHeatBtu').textContent;
+  const heatRaw = parseInt(heat.replace(/[^0-9]/g,'')) || 0;
+  const verdict = document.getElementById('verdictRec').textContent;
   const reason  = document.getElementById('verdictReason').textContent;
   const hours      = document.getElementById('usageHours').value;
   const mRate      = document.getElementById('meralcoRate').value;
@@ -1043,10 +1553,24 @@ function copyDetails() {
   const contact = document.getElementById('contactNum').value || 'N/A';
   const addr    = document.getElementById('address').value || 'N/A';
 
+  // Selected unit price range (single or multi)
+  const selHp = selectedHp;
+  const selCount = selectedCount;
+  const prices = AK_PRICES[selHp] || { min: 0, max: 0 };
+  const totalMin = prices.min * selCount;
+  const totalMax = prices.max * selCount;
+  const priceLine = prices.min > 0
+    ? '\u20B1' + totalMin.toLocaleString() + ' \u2013 \u20B1' + totalMax.toLocaleString()
+    : 'Contact AirconKing for pricing';
+  const capacityLabel = selCount > 1
+    ? `${selCount} \u00D7 ${selHp.toFixed(1)} HP Split Type Inverter`
+    : `${selHp.toFixed(1)} HP Split Type Inverter`;
+
   const msg = [
     'Hi! I\u2019d like to inquire about aircon installation. Here are my calculator results:',
     '',
-    '\uD83C\uDFE0 AirconKing HP Load Calculator Results',
+    '\uD83C\uDFE0 AirconKing Cooling Analysis System',
+    'HP Load Calculator Results',
     '',
     'Client: ' + client,
     'Contact: ' + contact,
@@ -1056,29 +1580,25 @@ function copyDetails() {
     'Dimensions: ' + len + 'm \u00D7 ' + wid + 'm = ' + fa,
     '',
     '\uD83D\uDCCA Results:',
-    'Total HP Needed: ' + hp + ' HP',
+    'Recommended: ' + hp + ' HP',
     'Total BTU: ' + total,
     'Cooling BTU: ' + cool,
-    'Heatload BTU: ' + heat,
+    ...(heatRaw > 0 ? ['Heatload BTU: ' + heat] : []),
     '',
-    '\uD83D\uDCDD Reason: ' + reason,
+    '\uD83D\uDCA1 ' + verdict,
+    '\uD83D\uDCDD ' + reason,
     '',
-    '\uD83D\uDCA1 Options:',
-    ...Array.from(document.querySelectorAll('.verdict-option')).map((el, i) => {
-      const label = el.querySelector('.opt-label').textContent;
-      const desc = el.querySelector('.opt-desc').textContent;
-      const cost = el.querySelector('.opt-cost').textContent;
-      return (i === 0 ? '\u2B50 ' : '\u2022 ') + desc + ' \u2014 ' + cost;
-    }),
+    '\uD83C\uDFF7\uFE0F Selected: ' + capacityLabel,
+    'Total Price Range: ' + priceLine,
+    '\u2705 FREE INSTALLATION included',
     '',
-    '\uD83D\uDCB0 Est. Monthly Electric Cost: ~\u20B1' + moTipid + ' \u2013 \u20B1' + moHeavy + '/month',
-    'Based on: ' + document.getElementById('hpLabel').textContent + ' HP Inverter, ' + hours + 'hrs/day, \u20B1' + mRate + '/kWh Meralco rate',
-    '',
-    '\u26A1 Cost Per Usage:',
+    // Cost per Usage first (per Ward's request — baliktarin)
+    '\u26A1 Estimated Cost Per Usage:',
     'Per hour: ' + perHour,
     hours + ' hours (overnight): ' + perNight,
     '',
-    '\uD83D\uDCA1 Mas tipid ang inverter kapag tuloy-tuloy ang gamit \u2014 nagla-low power mode na lang once malamig na ang room.',
+    '\uD83D\uDCB0 Estimated Monthly Electric Cost: ~\u20B1' + moTipid + ' \u2013 \u20B1' + moHeavy + '/month',
+    'Based on: ' + capacityLabel + ', ' + hours + 'hrs/day, \u20B1' + mRate + '/kWh Meralco rate',
     '',
     'Powered by AirconKing Cooling Analysis System',
   ].join('\n');
