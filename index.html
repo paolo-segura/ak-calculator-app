@@ -1027,7 +1027,7 @@
         <div style="min-width:32px;height:32px;border-radius:50%;background:var(--blue-dark);color:white;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;flex-shrink:0">1</div>
         <div>
           <strong style="color:var(--blue-dark);font-size:.92rem">Save your results as an image</strong>
-          <p style="color:var(--grey);font-size:.82rem;margin-top:2px">Tap the <strong>"📸 Save as Image"</strong> button below. The image will be downloaded to your phone.</p>
+          <p style="color:var(--grey);font-size:.82rem;margin-top:2px">Tap <strong>"📸 Save as Image"</strong> below. On your phone, tap <strong>Save to Photos</strong> when the share menu opens. On desktop, the image downloads automatically.</p>
         </div>
       </div>
       <div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:16px">
@@ -1168,8 +1168,8 @@
 
 <!-- Supabase JS CDN (UMD build) -->
 <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<!-- html2canvas CDN for Save as Image -->
-<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<!-- html-to-image for Save as Image (iOS Safari-friendly, no canvas-tainting) -->
+<script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.13/dist/html-to-image.js"></script>
 
 <script>
 // ── Supabase client (defensive: calculator works even if CDN fails) ─────
@@ -1698,12 +1698,12 @@ function resetAll() {
   calc();
 }
 
-// ── Save as Image ────────────────────────────────────────────────────────
-function saveAsImage(downloadFile) {
-  if (typeof html2canvas !== 'function') {
-    console.error('html2canvas not loaded — CDN blocked or offline.');
+// ── Save as Image (html-to-image — mobile-friendly, uses Web Share on iOS/Android) ──
+async function saveAsImage(downloadFile) {
+  if (typeof htmlToImage === 'undefined' || !htmlToImage.toBlob) {
+    console.error('html-to-image library not loaded (CDN blocked or offline).');
     if (downloadFile !== false) alert('Screenshot library failed to load. Please check your internet connection and try again.');
-    return Promise.reject(new Error('html2canvas not loaded'));
+    throw new Error('html-to-image not loaded');
   }
 
   const el = document.getElementById('captureArea');
@@ -1712,43 +1712,67 @@ function saveAsImage(downloadFile) {
   const helpBtn = document.querySelector('.help-btn');
   if (actionGrid) actionGrid.style.display = 'none';
   if (helpBtn) helpBtn.style.display = 'none';
+  const restore = () => {
+    if (actionGrid) actionGrid.style.display = '';
+    if (helpBtn) helpBtn.style.display = '';
+  };
 
-  return html2canvas(el, {
+  // Lighter render on mobile to keep capture fast + file size reasonable
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  const opts = {
     backgroundColor: '#dbeeff',
-    scale: 2,
-    useCORS: true,
-    allowTaint: true,
-    logging: false,
-    imageTimeout: 15000,
-  }).then(canvas => {
-    if (actionGrid) actionGrid.style.display = '';
-    if (helpBtn) helpBtn.style.display = '';
+    pixelRatio: isMobile ? 1.5 : 2,
+    cacheBust: true,
+  };
 
-    if (downloadFile !== false) {
-      let dataUrl;
-      try {
-        dataUrl = canvas.toDataURL('image/png');
-      } catch (taintErr) {
-        console.error('Canvas tainted (cross-origin image). Use an HTTP server instead of file://.', taintErr);
-        alert('Could not save image — the page was loaded via file:// which blocks image export. Please run a local server or deploy to view/save screenshots.');
-        throw taintErr;
+  try {
+    const blob = await htmlToImage.toBlob(el, opts);
+    restore();
+    if (!blob) throw new Error('Screenshot blob was empty');
+
+    // Upload path — return Blob directly for Supabase upload
+    if (downloadFile === false) return blob;
+
+    const name = document.getElementById('clientName').value || 'calculator';
+    const filename = 'AirconKing-Result-' + name.replace(/[^a-zA-Z0-9-_ ]/g, '') + '.png';
+
+    // Prefer Web Share API on mobile — opens native share sheet (Save to Photos, Messenger, etc.)
+    try {
+      const file = new File([blob], filename, { type: 'image/png' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: 'AirconKing Cooling Analysis',
+          text: 'My AirconKing calculator results',
+        });
+        return blob;
       }
-      const name = document.getElementById('clientName').value || 'calculator';
-      const link = document.createElement('a');
-      link.download = 'AirconKing-Result-' + name + '.png';
-      link.href = dataUrl;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+    } catch (shareErr) {
+      if (shareErr && shareErr.name === 'AbortError') return blob; // user canceled, don't fall through
+      console.warn('Web Share failed, falling back to download:', shareErr);
     }
-    return canvas;
-  }).catch(err => {
-    if (actionGrid) actionGrid.style.display = '';
-    if (helpBtn) helpBtn.style.display = '';
+
+    // Fallback: blob URL download (desktop browsers + Android Chrome)
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.download = filename;
+    link.href = url;
+    link.target = '_blank';
+    link.rel = 'noopener';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+    return blob;
+  } catch (err) {
+    restore();
     console.error('saveAsImage failed:', err);
-    if (downloadFile !== false) alert('Could not generate image: ' + (err && err.message ? err.message : 'unknown error'));
+    if (downloadFile !== false) {
+      const hint = 'Please try again, or use your phone\'s built-in screenshot (Volume Up + Side button on iPhone / Power + Volume Down on Android) to save your results.';
+      alert('Could not save the image automatically. ' + hint);
+    }
     throw err;
-  });
+  }
 }
 
 // ── Copy Details ─────────────────────────────────────────────────────────
@@ -1863,8 +1887,8 @@ async function submitLeadGate() {
 
     // Generate screenshot and upload to Supabase Storage
     try {
-      const canvas = await saveAsImage(false); // false = don't download
-      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+      const blob = await saveAsImage(false); // false = don't download, returns Blob directly
+      if (!blob) throw new Error('Screenshot blob was empty');
       const filePath = `${lead.id}.png`;
 
       const { error: uploadErr } = await sbClient.storage
