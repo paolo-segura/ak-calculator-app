@@ -1293,27 +1293,31 @@ function snapHp(totalBtu) {
 }
 
 // Build up to 2 multi-unit configurations for a given total BTU load.
-// Each option covers the load using multiple identical units.
+// Ranks candidate HP brackets by best fit (smallest overage) first, then by
+// fewest units on ties. Caps unit count at 5 for practical installs but
+// falls back if nothing fits (very large commercial loads).
 function buildMultiConfigs(totalBtu) {
-  const configs = [];
+  const MAX_UNITS = 5;
+  const candidates = HP_CAPACITIES
+    .filter(c => c.hp >= 1.5) // AK sells 1.5 HP and up
+    .map(({ hp, btu }) => {
+      const count = Math.max(2, Math.ceil(totalBtu / btu));
+      return {
+        hp,
+        count,
+        totalHp: count * hp,
+        overage: (count * btu - totalBtu) / totalBtu,
+      };
+    });
 
-  // Option A: fewest 3.0 HP units (27,000 BTU each, min 2)
-  const countA = Math.max(2, Math.ceil(totalBtu / 27000));
-  configs.push({ hp: 3.0, count: countA, totalHp: countA * 3.0 });
+  // Primary sort: lowest overage (best fit). Tie-break: fewer units.
+  candidates.sort((a, b) => a.overage - b.overage || a.count - b.count);
 
-  // Option B: 2.0 HP units (18,000 BTU each — smaller, more flexible zoning)
-  const countB = Math.max(2, Math.ceil(totalBtu / 18000));
-  if (countB !== countA) {
-    configs.push({ hp: 2.0, count: countB, totalHp: countB * 2.0 });
-  }
+  // Prefer configs <= MAX_UNITS; fall back to all candidates if too few fit
+  const capped = candidates.filter(c => c.count <= MAX_UNITS);
+  const pool = capped.length >= 2 ? capped : candidates;
 
-  // If we only got 1 unique option, add a 1.5 HP alternative (12,000 BTU each)
-  if (configs.length < 2) {
-    const count15 = Math.max(3, Math.ceil(totalBtu / 12000));
-    configs.push({ hp: 1.5, count: count15, totalHp: count15 * 1.5 });
-  }
-
-  return configs.slice(0, 2);
+  return pool.slice(0, 2);
 }
 
 // ── State for toggles + selected config ─────────────────────────────────
