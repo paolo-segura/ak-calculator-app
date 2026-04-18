@@ -946,6 +946,11 @@
           </div>
         </div>
 
+        <!-- Custom-mix hint (shown only when multi-unit recommendation is active) -->
+        <p class="hp-options-note" id="multiUnitCustomNote" style="display:none;margin-top:10px">
+          💬 <strong>Want a custom mix</strong> (e.g. 1×2.0 HP + 1×2.5 HP) <strong>or a specific brand?</strong> Message AirconKing below for personalized options.
+        </p>
+
         <p class="hp-options-note">💡 Actual aircon prices may vary depending on brand and model.</p>
       </div>
     </div>
@@ -1344,7 +1349,9 @@ function renderHpOptions(recHp) {
   const list = document.getElementById('hpOptionList');
   const label = document.getElementById('hpOptionsLabel');
   const sub = document.getElementById('hpOptionsSub');
+  const customNote = document.getElementById('multiUnitCustomNote');
   list.innerHTML = '';
+  if (customNote) customNote.style.display = isMultiUnit ? '' : 'none';
 
   if (isMultiUnit) {
     // ── Multi-unit mode: show 2 configuration options ────────────────
